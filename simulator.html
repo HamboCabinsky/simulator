@@ -1,0 +1,119 @@
+<html lang="">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PolyForm</title>
+    <style> 
+    </style>
+    <link rel="stylesheet" media="screen" href="defstylsh.css">
+    <link rel="shortcut icon" type="image/jpg" href="painty.jpg">
+    <script src="helper_functions.js"></script>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+  </head>
+  <body>
+      <div class="nav">
+      <a href="index.php">Home</a>
+      <a href="cards.php">Guessing Game</a>
+      <a href="GUI-tar.php">GUI-tar</a>
+      <a href="polyform.php" class="active">PolyForm</a>
+      <a href="featured.php">Featured Arts</a>
+      </div>
+      <br>
+      <div id="canvas">
+      </div>
+    </footer>
+    </main>
+
+  </body>
+
+  
+<script>
+    /*TODO
+      Make button for adding background color
+      Add new grow/shrink
+      Add joining/unjoining to image encoding and/or add import svg button
+      Resize image button
+    */
+    let screen_width  = screen.width;
+    let width, height;
+    width = Math.floor(screen_width);
+    height = Math.floor(screen_width);
+    c_width = .75*width;
+    c_height = .75*height;
+
+    let canvas = d3.select("#canvas").append("svg")
+                  .attr("width", c_width)
+                  .attr("height", c_height);
+
+    d3.select("#canvas").attr("style", "text-align:center;");
+    let background = canvas.append("rect")
+                      .attr("width", c_width)
+                      .attr("height", c_height)
+                      .attr("fill", "whitesmoke");
+
+    class Component {
+      constructor(x, y){
+        this.x = x;
+        this.y = y;
+        this.contains = [];
+        this.container = canvas.append("g")
+                              .attr("x", x)
+                              .attr("y", y);
+      }
+
+      draw(){
+        this.contains.push(canvas.append("rect")
+          .attr("x", this.x)
+          .attr("y", this.y)
+          .attr("width", 100)
+          .attr("height", 100)
+          .attr("fill", "black"));
+      }
+
+      delete(){
+        for(let i = 0; i < this.contains.length; i++)
+        {
+          d3.select(this.contains[i]).node().remove();
+        }
+        this.contains = [];
+      }
+    }
+
+    class Controller extends Component{
+      constructor(x,y){
+        super(x,y)
+      }
+      draw(){
+        this.contains.push(this.container.append("rect")
+          .attr("x", this.x)
+          .attr("y", this.y)
+          .attr("width", 400)
+          .attr("height", 200)
+          .attr("fill", "slategray"));
+        this.contains.push(this.container.append("rect")
+          .attr("x", this.x+25)
+          .attr("y", this.y+25)
+          .attr("width", 300)
+          .attr("height", 150)
+          .attr("fill", "lightgray"));
+        let text_wrapper = this.container.append('foreignObject')
+          .attr('x', this.x+30)
+          .attr('y', this.y + 30)
+          .attr('width', 200)
+          .attr('height', 100)
+        this.contains.push(text_wrapper);
+        this.contains.push(text_wrapper.append("xhtml:textarea")
+          .attr('type','text')
+          .attr('name','textInput')
+          .attr('value','Text goes here')
+          .attr("style", 'height:200px; width:200px;'));
+      }
+    }
+
+    let test = new Controller(100, 100);
+    test.draw();
+
+
+  </script>
+</html>
