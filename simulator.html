@@ -40,6 +40,9 @@
     let wires = [];
     let connections = {};
     let edit_mode = false;
+    let curr_inst = "";
+    let inst_index = 0;
+    let sleep_timer = 0;
     width = Math.floor(screen_width);
     height = Math.floor(screen_width);
     c_width = .75*width;
@@ -262,13 +265,34 @@
     //test.draw();
 
     const intervalId = setInterval(() => {
+      let lines = [];
+      if(sleep_timer)
+      {
+        sleep_timer--;
+        return;
+      }
       if(edit_mode == false)
       {
         let inst = test.text_area.node().value;
-        let lines = inst.split("\n");
-        for(line of lines)
+        if(curr_inst != inst)
         {
-          let tokens = line.split(" ");
+          curr_inst = inst;
+          inst_index = 0;
+        }
+        lines = inst.split("\n");
+        let i = 0;
+        //for(line of lines)
+        for(i = inst_index; i < lines.length; i++)
+        {
+           if(led.powered)
+            {
+              led.bulb.attr("fill", "pink");
+            }
+            else
+            {
+              led.bulb.attr("fill", "red");
+            }
+          let tokens = lines[i].split(" ");
           if(tokens[0] == "mov"){
             if(parseInt(tokens[1]) > 0)
             {
@@ -279,24 +303,22 @@
             {
               if(connections[tokens[2]] == 'pin1' || connections[tokens[2]] == 'pin2'){
                 led.powered = false; }}
+              console.log(i);
             }
           else if(tokens[0] == "slp")
           {
-            let time = parseInt(tokens[1])*100;
-            setTimeout(() => {
-                console.log("sleep" + time);
-              }, time);
+            inst_index = i+1;
+            sleep_timer = parseInt(tokens[1]);
+            console.log(i);
+            return;
           }
         }
+        if(i >= lines.length)
+        {
+          inst_index = 0;
+        }
       }
-      if(led.powered)
-      {
-        led.bulb.attr("fill", "pink");
-      }
-      else
-      {
-        led.bulb.attr("fill", "red");
-      }
+      
       edit_mode = false;
 
     }, 100); // Execute every tenth of a second (100 ms)
