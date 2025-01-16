@@ -37,6 +37,9 @@
     */
     let screen_width  = screen.width;
     let width, height;
+    let wires = [];
+    let connections = {};
+    let edit_mode = false;
     width = Math.floor(screen_width);
     height = Math.floor(screen_width);
     c_width = .75*width;
@@ -78,11 +81,60 @@
         }
         this.contains = [];
       }
-    }
+    };
+
+    class LED extends Component{
+      constructor(x, y){
+        super(x,y)
+        this.bulb = null;
+        this.pin1 = null;
+        this.pin2 = null;
+        this.powered = false;
+      }
+      draw(){
+        this.bulb = this.container.append("path")
+          .attr("d", "M 5 5 H 50 Q 75 25 50 50 H 5 Z")
+          .attr("fill", "red")
+          .attr("style", 'transform: translate(' + this.x + 'px,' + this.y + 'px);');
+        this.contains.push(this.bulb);
+        this.pin1 = this.container.append("rect")
+          .attr("width", 50)
+          .attr("height", 10)
+          .attr("x", this.x - 30)
+          .attr('y', this.y + 10)
+          .attr("fill", "gray")
+          .attr("id", "pin1")
+          .attr("data-px", this.x - 30)
+          .attr('data-py', this.y + 10)
+          .on("contextmenu", contextMenuCalled);
+        this.contains.push(this.pin1);
+        this.pin2 = this.container.append("rect")
+          .attr("width", 50)
+          .attr("height", 10)
+          .attr("x", this.x-30)
+          .attr('y', this.y+40)
+          .attr("fill", "gray")
+          .attr("id", "pin2")
+          .attr("data-px", this.x - 30)
+          .attr('data-py', this.y + 40)
+          .on("contextmenu", contextMenuCalled);
+        this.contains.push(this.pin2);
+      }
+
+    };
 
     class Controller extends Component{
       constructor(x,y){
         super(x,y)
+        this.p0 = null;
+        this.p0_x = this.x + 350;
+        this.p0_y = this.y + 50;
+        this.ground = null;
+        this.ground_x = this.x + 350;
+        this.ground_y = this.y + 100;
+        this.text_wrapper = null; 
+        this.text_area = null;
+        this.edit_mode = false;
       }
       draw(){
         this.contains.push(this.container.append("rect")
@@ -97,22 +149,157 @@
           .attr("width", 300)
           .attr("height", 150)
           .attr("fill", "lightgray"));
-        let text_wrapper = this.container.append('foreignObject')
+        this.contains.push(this.container.append("text")
+          .attr("x", this.x + 340)
+          .attr("y", this.y + 35)
+          .text("p0"));
+        this.p0 = this.container.append("circle")
+          .attr("cx", this.p0_x)
+          .attr("cy", this.p0_y)
+          .attr("r", 5)
+          .attr('width', 20)
+          .attr('height', 20)
+          .attr("fill", "yellow")
+          .attr('id', "p0")
+          .attr("data-px", this.p0_x)
+          .attr('data-py', this.p0_y)
+          .on("contextmenu", contextMenuCalled);
+        this.contains.push(this.p0);
+        this.ground = this.container.append("circle")
+          .attr("cx", this.x + 350)
+          .attr("cy", this.y + 100)
+          .attr("r", 5)
+          .attr('width', 20)
+          .attr('height', 20)
+          .attr("fill", "black")
+          .attr('id', "ground")
+          .attr("data-px", this.x + 350)
+          .attr('data-py', this.y + 100)
+          .on("contextmenu", contextMenuCalled);
+        this.contains.push(this.ground);
+        this.text_wrapper = this.container.append('foreignObject')
           .attr('x', this.x+30)
           .attr('y', this.y + 30)
           .attr('width', 200)
           .attr('height', 100)
-        this.contains.push(text_wrapper);
-        this.contains.push(text_wrapper.append("xhtml:textarea")
+        this.contains.push(this.text_wrapper);
+        this.text_area = this.text_wrapper.append("xhtml:textarea")
           .attr('type','text')
+          .attr('id', 'text_area')
           .attr('name','textInput')
           .attr('value','Text goes here')
-          .attr("style", 'height:200px; width:200px;'));
+          .attr("style", 'height:100px; width:200px;');
+        let t = document.getElementById('text_area');
+        t.addEventListener('input', () => {
+          edit_mode = true;
+          });
+        this.contains.push(this.text_area);
       }
-    }
+    };
+
+    canvas.on("contextmenu", function(){
+              d3.event.preventDefault();
+        });
+
+    let selected = [];
+
+    function contextMenuCalled(){
+      let index = selected.indexOf(this);
+      if(index == -1)
+      {
+        selected.push(this);
+        d3.select(this).attr('stroke-width', 3)
+                       .attr('stroke', "gold");
+      }
+      else
+      {
+        selected.splice(index,1);
+        d3.select(this).attr('stroke-width', 0);
+      }
+      if(this.id in connections)
+      {
+        for(wire of wires)
+        {
+          if(wire.attr("data-origin") == this.id || wire.attr("data-end") == this.id)
+          {
+            let wire_index = wires.indexOf(wire);
+            delete connections[wire.attr("data-origin")];
+            delete connections[wire.attr("data-end")];
+            wire.remove();
+            wires.splice(index,1);
+          }
+        }
+      }
+      if(selected.length > 1){
+        wires.push(canvas.append('line')
+                          .style("stroke", "lightgreen")
+                          .style("stroke-width", 4)
+                          .attr("x1", d3.select(selected[0]).attr("data-px"))
+                          .attr("y1", d3.select(selected[0]).attr("data-py"))
+                          .attr('x2', d3.select(selected[1]).attr("data-px"))
+                          .attr("y2", d3.select(selected[1]).attr("data-py"))
+                          .attr("data-origin", d3.select(selected[0]).attr("id"))
+                          .attr("data-end", d3.select(selected[1]).attr('id')));
+        connections[selected[0].id] = selected[1].id;
+        connections[selected[1].id] = selected[0].id;
+
+
+        for(sel of selected)
+        {
+          d3.select(sel).attr('stroke-width', 0);
+        }
+        selected = []
+      }
+
+    };
 
     let test = new Controller(100, 100);
-    test.draw();
+    let led = new LED(700, 250);
+    let components = [];
+    components.push(test);
+    components.push(led);
+    components.forEach(comp => comp.draw());
+    //test.draw();
+
+    const intervalId = setInterval(() => {
+      if(edit_mode == false)
+      {
+        let inst = test.text_area.node().value;
+        let lines = inst.split("\n");
+        for(line of lines)
+        {
+          let tokens = line.split(" ");
+          if(tokens[0] == "mov"){
+            if(parseInt(tokens[1]) > 0)
+            {
+              if(connections[tokens[2]] == 'pin1' || connections[tokens[2]] == 'pin2'){
+                led.powered = true; }
+            }
+            else
+            {
+              if(connections[tokens[2]] == 'pin1' || connections[tokens[2]] == 'pin2'){
+                led.powered = false; }}
+            }
+          else if(tokens[0] == "slp")
+          {
+            let time = parseInt(tokens[1])*100;
+            setTimeout(() => {
+                console.log("sleep" + time);
+              }, time);
+          }
+        }
+      }
+      if(led.powered)
+      {
+        led.bulb.attr("fill", "pink");
+      }
+      else
+      {
+        led.bulb.attr("fill", "red");
+      }
+      edit_mode = false;
+
+    }, 100); // Execute every tenth of a second (100 ms)
 
 
   </script>
