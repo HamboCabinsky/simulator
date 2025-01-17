@@ -130,11 +130,23 @@
       constructor(x,y){
         super(x,y)
         this.p0 = null;
+        this.p1 = null;
+        this.p2 = null;
+        this.p3 = null;
         this.p0_x = this.x + 350;
         this.p0_y = this.y + 50;
+        this.p1_x = this.x + 350;
+        this.p1_y = this.y + 75;
+        this.p2_x = this.x + 350;
+        this.p2_y = this.y + 100;
+        this.p3_x = this.x + 350;
+        this.p3_y = this.y + 125;
         this.ground = null;
         this.ground_x = this.x + 350;
-        this.ground_y = this.y + 100;
+        this.ground_y = this.y + 150;
+        this.ground2 = null;
+        this.ground2_x = this.x + 350;
+        this.ground2_y = this.y + 175;
         this.text_wrapper = null; 
         this.text_area = null;
         this.edit_mode = false;
@@ -153,9 +165,29 @@
           .attr("height", 150)
           .attr("fill", "lightgray"));
         this.contains.push(this.container.append("text")
-          .attr("x", this.x + 340)
-          .attr("y", this.y + 35)
+          .attr("x", this.p0_x + 10)
+          .attr("y", this.p0_y)
           .text("p0"));
+        this.contains.push(this.container.append("text")
+          .attr("x", this.p1_x + 10)
+          .attr("y", this.p1_y)
+          .text("p1"));
+        this.contains.push(this.container.append("text")
+          .attr("x", this.p2_x + 10)
+          .attr("y", this.p2_y)
+          .text("p2"));
+        this.contains.push(this.container.append("text")
+          .attr("x", this.p3_x + 10)
+          .attr("y", this.p3_y)
+          .text("p3"));
+        this.contains.push(this.container.append("text")
+          .attr("x", this.ground_x + 10)
+          .attr("y", this.ground_y)
+          .text("GND"));
+        this.contains.push(this.container.append("text")
+          .attr("x", this.ground2_x + 10)
+          .attr("y", this.ground2_y)
+          .text("GND"));
         this.p0 = this.container.append("circle")
           .attr("cx", this.p0_x)
           .attr("cy", this.p0_y)
@@ -167,21 +199,65 @@
           .attr("data-px", this.p0_x)
           .attr('data-py', this.p0_y)
           .on("contextmenu", contextMenuCalled);
+        this.p1 = this.container.append("circle")
+          .attr("cx", this.p1_x)
+          .attr("cy", this.p1_y)
+          .attr("r", 5)
+          .attr('width', 20)
+          .attr('height', 20)
+          .attr("fill", "yellow")
+          .attr('id', "p1")
+          .attr("data-px", this.p1_x)
+          .attr('data-py', this.p1_y)
+          .on("contextmenu", contextMenuCalled);
+        this.p2 = this.container.append("circle")
+          .attr("cx", this.p2_x)
+          .attr("cy", this.p2_y)
+          .attr("r", 5)
+          .attr('width', 20)
+          .attr('height', 20)
+          .attr("fill", "yellow")
+          .attr('id', "p2")
+          .attr("data-px", this.p2_x)
+          .attr('data-py', this.p2_y)
+          .on("contextmenu", contextMenuCalled);
+        this.p3 = this.container.append("circle")
+          .attr("cx", this.p3_x)
+          .attr("cy", this.p3_y)
+          .attr("r", 5)
+          .attr('width', 20)
+          .attr('height', 20)
+          .attr("fill", "yellow")
+          .attr('id', "p3")
+          .attr("data-px", this.p3_x)
+          .attr('data-py', this.p3_y)
+          .on("contextmenu", contextMenuCalled);
         this.contains.push(this.p0);
         this.ground = this.container.append("circle")
-          .attr("cx", this.x + 350)
-          .attr("cy", this.y + 100)
+          .attr("cx", this.ground_x)
+          .attr("cy", this.ground_y)
           .attr("r", 5)
           .attr('width', 20)
           .attr('height', 20)
           .attr("fill", "black")
           .attr('id', "ground")
-          .attr("data-px", this.x + 350)
-          .attr('data-py', this.y + 100)
+          .attr("data-px", this.ground_x)
+          .attr('data-py', this.ground_y)
+          .on("contextmenu", contextMenuCalled);
+        this.ground2 = this.container.append("circle")
+          .attr("cx", this.ground2_x)
+          .attr("cy", this.ground2_y)
+          .attr("r", 5)
+          .attr('width', 20)
+          .attr('height', 20)
+          .attr("fill", "black")
+          .attr('id', "ground2")
+          .attr("data-px", this.ground2_x)
+          .attr('data-py', this.ground2_y)
           .on("contextmenu", contextMenuCalled);
         this.contains.push(this.ground);
         this.text_wrapper = this.container.append('foreignObject')
-          .attr('x', this.x+30)
+          .attr('x', this.x + 30)
           .attr('y', this.y + 30)
           .attr('width', 200)
           .attr('height', 100)
