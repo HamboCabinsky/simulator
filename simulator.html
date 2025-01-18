@@ -30,10 +30,10 @@
   
 <script>
     /*TODO
-      Make button for adding background color
-      Add new grow/shrink
-      Add joining/unjoining to image encoding and/or add import svg button
-      Resize image button
+      Instructions throw error when not sleeping, put slp 1 in textarea by default
+      Create pushbutton input
+      Create tlt tgt teq command
+      Components should be click and draggable with left click
     */
     let screen_width  = screen.width;
     let width, height;
@@ -43,6 +43,7 @@
     let curr_inst = "";
     let inst_index = 0;
     let sleep_timer = 0;
+    let sleep = false;
     width = Math.floor(screen_width);
     height = Math.floor(screen_width);
     c_width = .75*width;
@@ -332,13 +333,12 @@
 
     };
 
-    let test = new Controller(100, 100);
-    let led = new LED(700, 250);
+    let test = new Controller(20, 20);
+    let led = new LED(250, 250);
     let components = [];
     components.push(test);
     components.push(led);
     components.forEach(comp => comp.draw());
-    //test.draw();
 
     const intervalId = setInterval(() => {
       let lines = [];
@@ -356,9 +356,9 @@
           inst_index = 0;
         }
         lines = inst.split("\n");
-        let i = 0;
-        //for(line of lines)
-        for(i = inst_index; i < lines.length; i++)
+        console.log(lines);
+        let i = inst_index;
+        while(true)
         {
            if(led.powered)
             {
@@ -367,6 +367,18 @@
             else
             {
               led.bulb.attr("fill", "red");
+            }
+            console.log(lines[i]);
+           sleep = false;
+           for(let j = 0; j < lines.length; j++)
+           {
+            let slp_tok = lines[j].split(" ");
+            if(slp_tok[0] == "slp" && parseInt(slp_tok[1]) > 0) sleep = true;
+           }
+           if(!sleep)
+            {
+              console.log('Controller not sleeping!');
+              return;
             }
           let tokens = lines[i].split(" ");
           if(tokens[0] == "mov"){
@@ -379,20 +391,22 @@
             {
               if(connections[tokens[2]] == 'pin1' || connections[tokens[2]] == 'pin2'){
                 led.powered = false; }}
-              console.log(i);
             }
           else if(tokens[0] == "slp")
           {
-            inst_index = i+1;
+            if(i+1 < lines.length) inst_index = i+1;
             sleep_timer = parseInt(tokens[1]);
-            console.log(i);
+            sleep = true;
             return;
           }
+          i++;
+          if(i >= lines.length)
+          {
+            i = 0;
+            inst_index = 0;
+          }
         }
-        if(i >= lines.length)
-        {
-          inst_index = 0;
-        }
+        
       }
       
       edit_mode = false;
