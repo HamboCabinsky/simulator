@@ -93,7 +93,8 @@
         this.bulb = null;
         this.pin1 = null;
         this.pin2 = null;
-        this.powered = false;
+        //this.powered = false;
+        this.power = 0;
       }
       draw(){
         this.bulb = this.container.append("path")
@@ -360,9 +361,10 @@
         let i = inst_index;
         while(true)
         {
-           if(led.powered)
+           if(led.power)
             {
-              led.bulb.attr("fill", "pink");
+              let fill_str = "rgb(255," + parseInt(led.power*2) + "," + parseInt(led.power*2) +")"; 
+              led.bulb.attr("fill", fill_str);
             }
             else
             {
@@ -385,12 +387,17 @@
             if(parseInt(tokens[1]) > 0)
             {
               if(connections[tokens[2]] == 'pin1' || connections[tokens[2]] == 'pin2'){
-                led.powered = true; }
+                led.power = parseInt(tokens[1]);
+                console.log(led.power)
+                //led.powered = true; 
+              }
             }
             else
             {
               if(connections[tokens[2]] == 'pin1' || connections[tokens[2]] == 'pin2'){
-                led.powered = false; }}
+                led.power = 0;
+                //led.powered = false; 
+              }}
             }
           else if(tokens[0] == "slp")
           {
