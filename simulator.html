@@ -34,6 +34,7 @@
       Create pushbutton input
       Create tlt tgt teq command
       Components should be click and draggable with left click
+      Give controller a register
     */
     let screen_width  = screen.width;
     let width, height;
@@ -152,6 +153,16 @@
         this.text_wrapper = null; 
         this.text_area = null;
         this.edit_mode = false;
+        this.acc_box = null;
+        this.acc_text = null;
+        this.acc_label = null;
+        this.acc_x = this.x + 250;
+        this.acc_y = this.y + 50;
+        this.acc_text_x = this.acc_x + 12;
+        this.acc_text_y = this.acc_y + 45;
+        this.acc_label_x = this.acc_text_x - 5;
+        this.acc_label_y = this.acc_text_y - 30;
+        this.acc = 0;
       }
       draw(){
         this.contains.push(this.container.append("rect")
@@ -235,6 +246,9 @@
           .attr('data-py', this.p3_y)
           .on("contextmenu", contextMenuCalled);
         this.contains.push(this.p0);
+        this.contains.push(this.p1);
+        this.contains.push(this.p2);
+        this.contains.push(this.p3);
         this.ground = this.container.append("circle")
           .attr("cx", this.ground_x)
           .attr("cy", this.ground_y)
@@ -258,6 +272,7 @@
           .attr('data-py', this.ground2_y)
           .on("contextmenu", contextMenuCalled);
         this.contains.push(this.ground);
+        this.contains.push(this.ground2);
         this.text_wrapper = this.container.append('foreignObject')
           .attr('x', this.x + 30)
           .attr('y', this.y + 30)
@@ -275,6 +290,23 @@
           edit_mode = true;
           });
         this.contains.push(this.text_area);
+        this.acc_box = this.container.append("rect")
+                    .attr('x', this.acc_x)
+                    .attr('y', this.acc_y)
+                    .attr('width', 50)
+                    .attr("height", 50)
+                    .attr("fill", "silver");
+        this.acc_text = this.container.append("text")
+                          .attr("x", this.acc_text_x)
+                          .attr("y", this.acc_text_y)
+                          .text("000");
+        this.acc_label = this.container.append("text")
+                          .attr("x", this.acc_label_x)
+                          .attr("y", this.acc_label_y)
+                          .text("ACC");
+        this.contains.push(this.acc_box);
+        this.contains.push(this.acc_text);
+        this.contains.push(this.acc_label);
       }
     };
 
@@ -357,7 +389,6 @@
           inst_index = 0;
         }
         lines = inst.split("\n");
-        console.log(lines);
         let i = inst_index;
         while(true)
         {
@@ -370,7 +401,6 @@
             {
               led.bulb.attr("fill", "red");
             }
-            console.log(lines[i]);
            sleep = false;
            for(let j = 0; j < lines.length; j++)
            {
@@ -384,27 +414,39 @@
             }
           let tokens = lines[i].split(" ");
           if(tokens[0] == "mov"){
-            if(parseInt(tokens[1]) > 0)
+            if(tokens[1])
             {
               if(connections[tokens[2]] == 'pin1' || connections[tokens[2]] == 'pin2'){
-                led.power = parseInt(tokens[1]);
-                console.log(led.power)
-                //led.powered = true; 
+                let power = 0;
+                if(tokens[1] == "acc") power = test.acc;
+                else power = parseInt(tokens[1]);
+                led.power = power;
               }
-            }
-            else
-            {
-              if(connections[tokens[2]] == 'pin1' || connections[tokens[2]] == 'pin2'){
-                led.power = 0;
-                //led.powered = false; 
-              }}
-            }
+              else if(tokens[2] == 'acc')
+              {
+                test.acc = parseInt(tokens[1]);
+                let prefix = "";
+                if(test.acc < 100) prefix += "0";
+                if(test.acc < 10) prefix += "0"
+                test.acc_text.text(prefix + test.acc);
+              }
+            }}
           else if(tokens[0] == "slp")
           {
             if(i+1 < lines.length) inst_index = i+1;
             sleep_timer = parseInt(tokens[1]);
-            sleep = true;
             return;
+          }
+          else if(tokens[0] == "add")
+          {
+            test.acc += parseInt(tokens[1]);
+            console.log(parseInt(tokens[1]));
+            console.log(test.acc);
+            let prefix = "";
+            if(test.acc < 100) prefix += "0";
+            if(test.acc < 10) prefix += "0";
+            test.acc_text.text(prefix + test.acc);
+
           }
           i++;
           if(i >= lines.length)
