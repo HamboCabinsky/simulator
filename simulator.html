@@ -46,6 +46,7 @@
     let i = 0;
     let sleep_timer = 0;
     let sleep = false;
+    let cond = false;
     width = Math.floor(screen_width);
     height = Math.floor(screen_width);
     c_width = .75*width;
@@ -374,9 +375,11 @@
     components.push(led);
     components.forEach(comp => comp.draw());
 
-    function processInput(tokens)
+    function processInput(tokens, lines, i)
     {
+      console.log("process input");
       if(tokens[0] == "mov"){
+        console.log("conditional move");
           if(tokens[1])
           {
             if(connections[tokens[2]] == 'pin1' || connections[tokens[2]] == 'pin2'){
@@ -384,28 +387,26 @@
               if(tokens[1] == "acc") power = test.acc;
               else power = parseInt(tokens[1]);
               led.power = power;
+              console.log(power);
             }
             else if(tokens[2] == 'acc')
             {
               test.acc = parseInt(tokens[1]);
               let prefix = "";
               if(test.acc < 100) prefix += "0";
-              if(test.acc < 10) prefix += "0"
+              if(test.acc < 10) prefix += "0";
               test.acc_text.text(prefix + test.acc);
             }
           }}
       else if(tokens[0] == "slp")
       {
-        if(i+1 < lines.length) inst_index = i+1;
-        i++;
+        if(i+1 < lines.length) inst_index = i;
         sleep_timer = parseInt(tokens[1]);
-        return i;
+        return sleep_timer;
       }
       else if(tokens[0] == "add")
       {
         test.acc += parseInt(tokens[1]);
-        console.log(parseInt(tokens[1]));
-        console.log(test.acc);
         let prefix = "";
         if(test.acc < 100) prefix += "0";
         if(test.acc < 10) prefix += "0";
@@ -425,6 +426,11 @@
             {
               console.log("recursive call")
               tokens = lines[i].split(" ");
+              if(tokens[0] != "+") 
+                {
+                  i++;
+                  break;
+                }
               processInput(tokens.slice(1));
               i++;
             }
@@ -435,8 +441,20 @@
 
     const intervalId = setInterval(() => {
       let lines = [];
+      if(parseInt(led.power) != 0)
+            {
+              let fill_str = "rgb(255," + parseInt(led.power*2) + "," + parseInt(led.power*2) +")"; 
+              console.log(fill_str);
+              led.bulb.attr("fill", fill_str);
+              console.log("power led")
+            }
+            else
+            {
+              led.bulb.attr("fill", "red");
+            }
       if(sleep_timer)
       {
+        console.log("sleep timer " + sleep_timer);
         sleep_timer--;
         return;
       }
@@ -452,10 +470,12 @@
         let i = inst_index;
         while(true)
         {
-           if(led.power)
+           if(parseInt(led.power) != 0)
             {
               let fill_str = "rgb(255," + parseInt(led.power*2) + "," + parseInt(led.power*2) +")"; 
+              console.log(fill_str);
               led.bulb.attr("fill", fill_str);
+              console.log("power led")
             }
             else
             {
@@ -473,8 +493,9 @@
               return;
             }
           //if(i === undefined) i = 0;
-          let tokens = lines[i].split(" ");
-        if(tokens[0] == "mov"){
+        let tokens = lines[i].split(" ");
+        if(!cond && tokens[0] == "mov"){
+          console.log("move");
             if(tokens[1])
             {
               if(connections[tokens[2]] == 'pin1' || connections[tokens[2]] == 'pin2'){
@@ -488,44 +509,58 @@
                 test.acc = parseInt(tokens[1]);
                 let prefix = "";
                 if(test.acc < 100) prefix += "0";
-                if(test.acc < 10) prefix += "0"
+                if(test.acc < 10) prefix += "0";
                 test.acc_text.text(prefix + test.acc);
               }
             }}
-        else if(tokens[0] == "slp")
+        else if(!cond && tokens[0] == "slp")
         {
           if(i+1 < lines.length) inst_index = i+1;
           i++;
           sleep_timer = parseInt(tokens[1]);
-          return i;
+          return;
         }
-        else if(tokens[0] == "add")
+        else if(!cond && tokens[0] == "add")
         {
           test.acc += parseInt(tokens[1]);
-          console.log(parseInt(tokens[1]));
-          console.log(test.acc);
           let prefix = "";
           if(test.acc < 100) prefix += "0";
           if(test.acc < 10) prefix += "0";
           test.acc_text.text(prefix + test.acc);
         }
-        else if(tokens[0] == "teq")
+        else if(cond || tokens[0] == "teq")
           {
             let equal = false;
             if(tokens[1] == "acc" && test.acc == parseInt(tokens[2])) equal = true;
             else if(tokens[2] == "acc" && test.acc == parseInt(tokens[1])) equal = true;
             else if(parseInt(tokens[1]) == parseInt(tokens[2])) equal = true;
+            else if(cond) equal = true;
+
             if(equal)
             {
+              let timer = 0;
               i++;
               if(i < lines.length) tokens = lines[i].split(" ");
               while(i < lines.length && tokens[0] == "+")
               {
-                console.log("recursive call")
+                console.log("conditional execution")
                 tokens = lines[i].split(" ");
-                processInput(tokens.slice(1));
+                if(tokens[0] != "+")
+                { 
+                  i++;
+                  break;
+                }
+                console.log(tokens);
+                timer = processInput(tokens.slice(1), lines, i);
+                if(timer){
+                  sleep_timer = timer;
+                  cond = true;
+                  inst_index = i;
+                  return;
+                }
                 i++;
               }
+              cond = false;
             }
           }
           i++;
