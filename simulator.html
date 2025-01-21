@@ -30,11 +30,11 @@
   
 <script>
     /*TODO
+      FIX REGISTER TO REGISTER EQUALITY
       Instructions throw error when not sleeping, put slp 1 in textarea by default
       Create pushbutton input
       Create tlt tgt teq command
       Components should be click and draggable with left click
-      Give controller a register
     */
     let screen_width  = screen.width;
     let width, height;
@@ -410,16 +410,27 @@
         if(connections[tokens[2]] == 'pin1' || connections[tokens[2]] == 'pin2'){
           let power = 0;
           if(tokens[1] == "acc") power = test.acc;
+          else if(tokens[1] == "dat") power = test.dat;
           else power = parseInt(tokens[1]);
           led.power = power;
         }
         else if(tokens[2] == 'acc')
         {
-          test.acc = parseInt(tokens[1]);
+          if(tokens[1] == "dat") test.acc = test.dat;
+          else test.acc = parseInt(tokens[1]);
           let prefix = "";
           if(test.acc < 100) prefix += "0";
           if(test.acc < 10) prefix += "0";
           test.acc_text.text(prefix + test.acc);
+        }
+        else if(tokens[2] == 'dat')
+        {
+          if(tokens[1] == "acc") test.dat = test.acc;
+          else test.dat = parseInt(tokens[1]);
+          let prefix = "";
+          if(test.dat < 100) prefix += "0";
+          if(test.dat < 10) prefix += "0";
+          test.dat_text.text(prefix + test.dat);
         }
       }
     }
@@ -430,13 +441,14 @@
         processMove(tokens);}
       else if(tokens[0] == "slp")
       {
-        if(i+1 < lines.length) inst_index = i + 1;
+        if(i+1 < lines.length) inst_index = i;
         sleep_timer = parseInt(tokens[1]);
         return sleep_timer;
       }
       else if(tokens[0] == "add")
       {
-        test.acc += parseInt(tokens[1]);
+        if(tokens[1] == 'dat') test.acc += test.dat;
+        else test.acc += parseInt(tokens[1]);
         let prefix = "";
         if(test.acc < 100) prefix += "0";
         if(test.acc < 10) prefix += "0";
@@ -447,6 +459,8 @@
           let equal = false;
           if(tokens[1] == "acc" && test.acc == parseInt(tokens[2])) equal = true;
           else if(tokens[2] == "acc" && test.acc == parseInt(tokens[1])) equal = true;
+          else if(tokens[2] == "dat" && test.dat == parseInt(tokens[1])) equal = true;
+          else if(tokens[1] == "dat" && test.dat == parseInt(tokens[2])) equal = true;
           else if(parseInt(tokens[1]) == parseInt(tokens[2])) equal = true;
           if(equal)
           {
@@ -458,6 +472,7 @@
               if(tokens[0] != "+") 
                 {
                   i++;
+
                   break;
                 }
               processInput(tokens.slice(1));
@@ -493,8 +508,10 @@
           curr_inst = inst;
           inst_index = 0;
         }
+        inst = inst.toLowerCase();
         lines = inst.split("\n");
         let i = inst_index;
+        console.log("i: " + i);
         while(true)
         {
            if(parseInt(led.power) != 0)
@@ -517,21 +534,21 @@
               console.log('Controller not sleeping!');
               return;
             }
-          //if(i === undefined) i = 0;
         let tokens = lines[i].split(" ");
         let inc = true;
         console.log(tokens);
         if(!cond && tokens[0] == "mov") processMove(tokens);
         else if(!cond && tokens[0] == "slp")
         {
-          if(i+1 < lines.length) inst_index = i+1;
+          if(i+1 < lines.length) inst_index = i + 1;
           i++;
           sleep_timer = parseInt(tokens[1]);
           return;
         }
         else if(!cond && tokens[0] == "add")
         {
-          test.acc += parseInt(tokens[1]);
+          if(tokens[1] == 'dat') test.acc += test.dat;
+          else test.acc += parseInt(tokens[1]);
           let prefix = "";
           if(test.acc < 100) prefix += "0";
           if(test.acc < 10) prefix += "0";
@@ -543,6 +560,8 @@
             let equal = false;
             if(tokens[1] == "acc" && test.acc == parseInt(tokens[2])) equal = true;
             else if(tokens[2] == "acc" && test.acc == parseInt(tokens[1])) equal = true;
+            else if(tokens[2] == "dat" && test.dat == parseInt(tokens[1])) equal = true;
+            else if(tokens[1] == "dat" && test.dat == parseInt(tokens[2])) equal = true;
             else if(parseInt(tokens[1]) == parseInt(tokens[2])) equal = true;
             else if(cond) equal = true;
             if(equal)
@@ -553,12 +572,7 @@
               while(i < lines.length && tokens[0] == "+")
               {
                 tokens = lines[i].split(" ");
-                if(tokens[0] != "+")
-                { 
-                  //i++;
-                  inc = false;
-                  break;
-                }
+
                 timer = processInput(tokens.slice(1), lines, i);
                 if(timer){
                   sleep_timer = timer;
@@ -566,12 +580,15 @@
                   inst_index = i;
                   return;
                 }
-                if(inc) i++;
+                inc = false;
+                i++;
               }
+              i--;
               cond = false;
             }
           }
           if(inc) i++;
+          console.log("i: " + i);
           if(i >= lines.length)
           {
             i = 0;
