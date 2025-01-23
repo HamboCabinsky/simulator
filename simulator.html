@@ -30,10 +30,7 @@
   
 <script>
     /*TODO
-      FIX REGISTER TO REGISTER EQUALITY
-      Instructions throw error when not sleeping, put slp 1 in textarea by default
       Create pushbutton input
-      Create tlt tgt teq command
       Components should be click and draggable with left click
     */
     let screen_width  = screen.width;
@@ -42,11 +39,11 @@
     let connections = {};
     let edit_mode = false;
     let curr_inst = "";
-    let inst_index = 0;
     let i = 0;
     let sleep_timer = 0;
     let sleep = false;
     let cond = false;
+    let inc = false;
     width = Math.floor(screen_width);
     height = Math.floor(screen_width);
     c_width = .75*width;
@@ -96,7 +93,6 @@
         this.bulb = null;
         this.pin1 = null;
         this.pin2 = null;
-        //this.powered = false;
         this.power = 0;
       }
       draw(){
@@ -437,11 +433,11 @@
 
     function processInput(tokens, lines, i)
     {
+      console.log("process input: " + tokens);
       if(tokens[0] == "mov"){
         processMove(tokens);}
       else if(tokens[0] == "slp")
       {
-        if(i+1 < lines.length) inst_index = i;
         sleep_timer = parseInt(tokens[1]);
         return sleep_timer;
       }
@@ -472,7 +468,6 @@
               if(tokens[0] != "+") 
                 {
                   i++;
-
                   break;
                 }
               processInput(tokens.slice(1));
@@ -481,6 +476,29 @@
           }
         }
         i++;
+    }
+
+    function condExecution(lines)
+    {
+      let timer = 0;
+      i++;
+      if(i < lines.length) tokens = lines[i].split(" ");
+      while(i < lines.length && tokens[0] == "+")
+      {
+        tokens = lines[i].split(" ");
+
+        timer = processInput(tokens.slice(1), lines, i);
+        if(timer){
+          sleep_timer = timer;
+          cond = true;
+          return true;
+        }
+        inc = false;
+        i++;
+      }
+      i--;
+      cond = false;
+      return false;
     }
 
     const intervalId = setInterval(() => {
@@ -506,12 +524,10 @@
         if(curr_inst != inst)
         {
           curr_inst = inst;
-          inst_index = 0;
+          i = 0;
         }
         inst = inst.toLowerCase();
         lines = inst.split("\n");
-        let i = inst_index;
-        console.log("i: " + i);
         while(true)
         {
            if(parseInt(led.power) != 0)
@@ -534,66 +550,98 @@
               console.log('Controller not sleeping!');
               return;
             }
-        let tokens = lines[i].split(" ");
-        let inc = true;
-        console.log(tokens);
-        if(!cond && tokens[0] == "mov") processMove(tokens);
-        else if(!cond && tokens[0] == "slp")
-        {
-          if(i+1 < lines.length) inst_index = i + 1;
-          i++;
-          sleep_timer = parseInt(tokens[1]);
-          return;
-        }
-        else if(!cond && tokens[0] == "add")
-        {
-          if(tokens[1] == 'dat') test.acc += test.dat;
-          else test.acc += parseInt(tokens[1]);
-          let prefix = "";
-          if(test.acc < 100) prefix += "0";
-          if(test.acc < 10) prefix += "0";
-          test.acc_text.text(prefix + test.acc)
-          console.log(test.acc);
-        }
-        else if(cond || tokens[0] == "teq")
+          let tokens = lines[i].split(" ");
+          inc = true;
+          console.log(tokens);
+          if(!cond && tokens[0] == "mov") processMove(tokens);
+          else if(!cond && tokens[0] == "slp")
+          {
+            i++;
+            sleep_timer = parseInt(tokens[1]);
+            return;
+          }
+          else if(!cond && tokens[0] == "add")
+          {
+            if(tokens[1] == 'dat') test.acc += test.dat;
+            else test.acc += parseInt(tokens[1]);
+            let prefix = "";
+            if(test.acc < 100) prefix += "0";
+            if(test.acc < 10) prefix += "0";
+            test.acc_text.text(prefix + test.acc)
+            console.log(test.acc);
+          }
+          else if(tokens[0] == "teq")
           {
             let equal = false;
-            if(tokens[1] == "acc" && test.acc == parseInt(tokens[2])) equal = true;
+            if((tokens[1] == "acc" && tokens[2] == "dat") || (tokens[1] == "dat" && tokens[2] == "acc"))
+            {
+              if(test.acc == test.dat) equal = true;
+            }
+            else if(tokens[1] == "acc" && test.acc == parseInt(tokens[2])) equal = true;
             else if(tokens[2] == "acc" && test.acc == parseInt(tokens[1])) equal = true;
             else if(tokens[2] == "dat" && test.dat == parseInt(tokens[1])) equal = true;
             else if(tokens[1] == "dat" && test.dat == parseInt(tokens[2])) equal = true;
             else if(parseInt(tokens[1]) == parseInt(tokens[2])) equal = true;
-            else if(cond) equal = true;
             if(equal)
             {
-              let timer = 0;
-              i++;
-              if(i < lines.length) tokens = lines[i].split(" ");
-              while(i < lines.length && tokens[0] == "+")
-              {
-                tokens = lines[i].split(" ");
-
-                timer = processInput(tokens.slice(1), lines, i);
-                if(timer){
-                  sleep_timer = timer;
-                  cond = true;
-                  inst_index = i;
-                  return;
-                }
-                inc = false;
-                i++;
-              }
-              i--;
-              cond = false;
+              if(condExecution(lines)) return;
             }
           }
-          if(inc) i++;
-          console.log("i: " + i);
-          if(i >= lines.length)
+          else if(tokens[0] == "tlt")
           {
-            i = 0;
-            inst_index = 0;
+            let less = false;
+            if((tokens[1] == "acc" && tokens[2] == "dat") || (tokens[1] == "dat" && tokens[2] == "acc"))
+            {
+              if(tokens[1] == "acc")
+              {
+                if(test.acc < test.dat) less = true;
+              }
+              else if(tokens[1] == "dat")
+              {
+                if(test.dat < test.acc) less = true;
+              }
+            }
+            else if(tokens[1] == "acc" && test.acc < parseInt(tokens[2])) less = true;
+            else if(tokens[2] == "acc" && test.acc >= parseInt(tokens[1])) less = true;
+            else if(tokens[2] == "dat" && test.dat >= parseInt(tokens[1])) less = true;
+            else if(tokens[1] == "dat" && test.dat < parseInt(tokens[2])) less = true;
+            else if(parseInt(tokens[1]) < parseInt(tokens[2])) less = true;
+            if(less)
+            {
+              if(condExecution(lines)) return;
+            }
           }
+          else if(tokens[0] == "tgt")
+          {
+            let gtr = false;
+            if((tokens[1] == "acc" && tokens[2] == "dat") || (tokens[1] == "dat" && tokens[2] == "acc"))
+            {
+              if(tokens[1] == "acc")
+              {
+                if(test.acc > test.dat) gtr = true;
+              }
+              else if(tokens[1] == "dat")
+              {
+                if(test.dat > test.acc) gtr = true;
+              }
+            }
+            else if(tokens[1] == "acc" && test.acc > parseInt(tokens[2])) gtr = true;
+            else if(tokens[2] == "acc" && test.acc <= parseInt(tokens[1])) gtr = true;
+            else if(tokens[2] == "dat" && test.dat <= parseInt(tokens[1])) gtr = true;
+            else if(tokens[1] == "dat" && test.dat > parseInt(tokens[2])) gtr = true;
+            else if(parseInt(tokens[1]) > parseInt(tokens[2])) gtr = true;
+            if(gtr)
+            {
+              if(condExecution(lines)) return;
+            }
+          }
+          else if(cond)
+          {
+            if(condExecution(lines)) return;
+          }
+
+          if(inc) i++;
+          if(i >= lines.length) i = 0;
         }
         
       }
