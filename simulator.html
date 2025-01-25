@@ -30,6 +30,8 @@
   
 <script>
     /*TODO
+      fix error when no line break at end of instructions
+      fix double call of some functions
       Create pushbutton input
       Components should be click and draggable with left click
     */
@@ -127,9 +129,70 @@
 
     };
 
+    class Display extends Component{
+      constructor(x,y){
+        super(x,y);
+        this.case = null;
+        this.screen = null;
+        this.in = null;
+        this.segs = [];
+        this.case_x = this.x;
+        this.case_y = this.y;
+        this.screen_x = this.x + 25;
+        this.screen_y = this.y + 25;
+        this.screen_size = 250;
+        this.in_x = this.x + 275;
+        this.in_y = this.y + 12;
+      }
+      draw()
+      {
+        this.case = this.container.append("rect")
+          .attr("x", this.x)
+          .attr("y", this.y)
+          .attr("width", 300)
+          .attr("height", 300)
+          .attr("fill", "slategray");
+        this.contains.push(this.case);
+        this.screen = this.container.append("rect")
+          .attr("x", this.screen_x)
+          .attr("y", this.screen_y)
+          .attr("width", this.screen_size)
+          .attr("height", this.screen_size)
+          .attr("fill", "whitesmoke");
+        this.contains.push(this.screen);
+        this.in = this.container.append("circle")
+          .attr("cx", this.in_x)
+          .attr("cy", this.in_y)
+          .attr("r", 5)
+          .attr('width', 20)
+          .attr('height', 20)
+          .attr("fill", "yellow")
+          .attr('id', "display")
+          .attr("data-px", this.in_x)
+          .attr('data-py', this.in_y)
+          .on("contextmenu", contextMenuCalled);
+        this.contains.push(this.in);
+        //or operator for integer division
+        for(let i = 0; i < this.screen_size/25 | 0; i++)
+        {
+          for(let j = 0; j < this.screen_size/25 | 0; j++)
+          {
+            let seg = this.container.append("rect")
+              .attr("x", this.screen_x + 25*j)
+              .attr("y", this.screen_y + 25*i)
+              .attr("width", 25)
+              .attr("height", 25)
+              .attr("fill", "whitesmoke");
+            this.contains.push(seg);
+            this.segs.push(seg);
+          }
+        }
+      }
+    }
+
     class Controller extends Component{
       constructor(x,y){
-        super(x,y)
+        super(x,y);
         this.p0 = null;
         this.p1 = null;
         this.p2 = null;
@@ -392,10 +455,12 @@
     };
 
     let test = new Controller(20, 20);
-    let led = new LED(250, 250);
+    let led = new LED(370, 250);
+    let display = new Display(20, 250);
     let components = [];
     components.push(test);
     components.push(led);
+    components.push(display);
     components.forEach(comp => comp.draw());
 
     function processMove(tokens)
@@ -427,6 +492,22 @@
           if(test.dat < 100) prefix += "0";
           if(test.dat < 10) prefix += "0";
           test.dat_text.text(prefix + test.dat);
+        }
+        else if(connections[tokens[2]] == 'display')
+        {
+          let seg = null;
+          if(tokens[1] == 'acc') seg = test.acc;
+          else if(tokens[1] == 'dat') seg = test.dat;
+          else seg = parseInt(tokens[1]);
+          console.log("PRINT");
+          if(seg != null && seg > -1)
+          {
+            if(seg < display.segs.length) display.segs[seg].attr("fill", "black");
+          }
+          else if(seg != null)
+          {
+            if(-seg < display.segs.length) display.segs[-seg].attr("fill", "whitesmoke");
+          }
         }
       }
     }
