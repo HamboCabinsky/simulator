@@ -516,6 +516,7 @@
     function processInput(tokens, lines)
     {
       console.log("process input: " + tokens);
+      console.log(lines);
       console.log("i: " + i);
       if(tokens[0] == "mov"){
         processMove(tokens);}
@@ -537,6 +538,26 @@
       {
         if(tokens[1] == 'dat') test.acc *= test.dat;
         else test.acc *= parseInt(tokens[1]);
+        let prefix = "";
+        if(test.acc < 100) prefix += "0";
+        if(test.acc < 10) prefix += "0";
+        test.acc_text.text(prefix + test.acc);
+      }
+      else if(tokens[0] == "div")
+      {
+        console.log(Math.floor(test.acc/parseInt(tokens[1])));
+        if(tokens[1] == 'dat') test.acc =  Math.floor(test.acc/test.dat);
+        else test.acc = Math.floor(test.acc/parseInt(tokens[1]));
+        let prefix = "";
+        if(test.acc < 100) prefix += "0";
+        if(test.acc < 10) prefix += "0";
+        test.acc_text.text(prefix + test.acc);
+      }
+      else if(tokens[0] == "mod")
+      {
+        console.log(test.acc % parseInt(tokens[1]));
+        if(tokens[1] == 'dat') test.acc %= test.dat;
+        else test.acc %= parseInt(tokens[1]);
         let prefix = "";
         if(test.acc < 100) prefix += "0";
         if(test.acc < 10) prefix += "0";
@@ -573,7 +594,6 @@
             }
           }
         }
-        i++;
     }
 
     function condExecution(lines)
@@ -583,8 +603,10 @@
       if(i < lines.length) tokens = lines[i].split(" ");
       while(i < lines.length && tokens[0] == "+")
       {
+        console.log("cond ex i: " + i);
         tokens = lines[i].split(" ");
-
+        if(tokens[0] != '+') break;
+        console.log("cond ex: " + tokens);
         timer = processInput(tokens.slice(1), lines);
         if(timer == -1) return false;
         if(timer){
@@ -688,6 +710,24 @@
             if(test.acc < 10) prefix += "0";
             test.acc_text.text(prefix + test.acc);
           }
+          else if(!cond && tokens[0] == "div")
+          {
+            if(tokens[1] == 'dat') test.acc =  Math.floor(test.acc/test.dat);
+            else test.acc = Math.floor(test.acc/parseInt(tokens[1]));
+            let prefix = "";
+            if(test.acc < 100) prefix += "0";
+            if(test.acc < 10) prefix += "0";
+            test.acc_text.text(prefix + test.acc);
+          }
+          else if(!cond && tokens[0] == "mod")
+          {
+            if(tokens[1] == 'dat') test.acc %= test.dat;
+            else test.acc %= parseInt(tokens[1]);
+            let prefix = "";
+            if(test.acc < 100) prefix += "0";
+            if(test.acc < 10) prefix += "0";
+            test.acc_text.text(prefix + test.acc);
+          }
           else if(!cond && tokens[0] == "jmp")
           {
             i = labels[tokens[1]];
@@ -766,8 +806,9 @@
             if(condExecution(lines)) return;
           }
 
-          if(inc) i++;
+          //if(inc) i++;
           if(i >= lines.length) i = 0;
+          if(inc) i++;
         }
         
       }
