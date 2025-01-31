@@ -192,6 +192,51 @@
       }
     }
 
+    class PushButton extends Component{
+      constructor(x,y)
+      {
+        super(x,y);
+        this.frame = null;
+        this.button = null;
+        this.pin = null;
+        this.p_x = this.x + 10;
+        this.p_y = this.y + 10;
+      }
+
+      draw(){
+        this.frame = this.container.append("rect")
+          .attr("x", this.x)
+          .attr("y", this.y)
+          .attr("width", 75)
+          .attr("height", 75)
+          .attr("fill", "slategray");
+        this.contains.push(this.frame);
+        this.button = this.container.append("circle")
+          .attr("cx", this.x + 37)
+          .attr("cy", this.y + 37)
+          .attr("r", 20)
+          .attr('width', 20)
+          .attr('height', 20)
+          .attr("fill", "red")
+          .attr('id', "button")
+          .attr("data-px", this.p0_x)
+          .attr('data-py', this.p0_y)
+          .on("click", handleClick);
+        this.contains.push(this.button);
+        this.p0 = this.container.append("circle")
+          .attr("cx", this.p_x)
+          .attr("cy", this.p_y)
+          .attr("r", 5)
+          .attr('width', 20)
+          .attr('height', 20)
+          .attr("fill", "yellow")
+          .attr('id', "pushbutton")
+          .attr("data-px", this.p_x)
+          .attr('data-py', this.p_y)
+          .on("contextmenu", contextMenuCalled);
+      }
+    }
+
     class Controller extends Component{
       constructor(x,y){
         super(x,y);
@@ -199,6 +244,10 @@
         this.p1 = null;
         this.p2 = null;
         this.p3 = null;
+        this.p0_val = null;
+        this.p1_val = null;
+        this.p2_val = null;
+        this.p3_val = null;
         this.p0_x = this.x + 350;
         this.p0_y = this.y + 50;
         this.p1_x = this.x + 350;
@@ -459,11 +508,47 @@
     let test = new Controller(20, 20);
     let led = new LED(370, 250);
     let display = new Display(20, 250);
+    let button = new PushButton(370,500);
     let components = [];
     components.push(test);
     components.push(led);
     components.push(display);
+    components.push(button);
     components.forEach(comp => comp.draw());
+
+    function handleClick()
+    {
+      let connected = null;
+      if(this.id == "button")
+      {
+        button.button.attr("stroke-width", 3);
+        button.button.attr("stroke", "gold");
+        setTimeout(() => {
+                      button.button.attr("stroke-width", 0);
+                    }, "200");
+      }
+      connected = connections["pushbutton"];
+      let pushed = false;
+      if(connected == "p0"){ test.p0_val = 100;
+                              console.log("p0 pushed!");
+                              pushed = true;}
+      else if(connected == "p1") { test.p1_val = 100;
+                              pushed = true;}
+      else if(connected == "p2") { test.p2_val = 100;
+                              pushed = true;}
+      else if(connected == "p3") { test.p3_val = 100;
+                              pushed = true;}
+      if(pushed)
+      {
+        setTimeout(() => {
+                      if(connected == "p0") test.p0_val = 0;
+                      else if(connected == "p1") test.p1_val = 0;
+                      else if(connected == "p2")  test.p2_val = 0;
+                      else if(connected == "p3")  test.p3_val = 0;
+                    }, "200");
+      }
+      pushed = false;
+    }
 
     function processMove(tokens)
     {
@@ -791,6 +876,7 @@
             else if(tokens[2] == "acc" && test.acc <= parseInt(tokens[1])) gtr = true;
             else if(tokens[2] == "dat" && test.dat <= parseInt(tokens[1])) gtr = true;
             else if(tokens[1] == "dat" && test.dat > parseInt(tokens[2])) gtr = true;
+            else if(tokens[1] == "p0" && test.p0_val > parseInt(tokens[2])) gtr = true;
             else if(parseInt(tokens[1]) > parseInt(tokens[2])) gtr = true;
             if(gtr)
             {
