@@ -32,8 +32,6 @@
     /*TODO
       fix double call of some functions
       fix crash when no sleep after jump
-      fix negative number display in registers
-      Create pushbutton input
       Components should be click and draggable with left click
     */
     let screen_width  = screen.width;
@@ -193,7 +191,7 @@
     }
 
     class PushButton extends Component{
-      constructor(x,y)
+      constructor(x,y, id)
       {
         super(x,y);
         this.frame = null;
@@ -201,6 +199,7 @@
         this.pin = null;
         this.p_x = this.x + 10;
         this.p_y = this.y + 10;
+        this.id = id;
       }
 
       draw(){
@@ -218,7 +217,7 @@
           .attr('width', 20)
           .attr('height', 20)
           .attr("fill", "red")
-          .attr('id', "button")
+          .attr('id', this.id)
           .attr("data-px", this.p0_x)
           .attr('data-py', this.p0_y)
           .on("click", handleClick);
@@ -230,7 +229,7 @@
           .attr('width', 20)
           .attr('height', 20)
           .attr("fill", "yellow")
-          .attr('id', "pushbutton")
+          .attr('id', this.id+"_conn")
           .attr("data-px", this.p_x)
           .attr('data-py', this.p_y)
           .on("contextmenu", contextMenuCalled);
@@ -244,10 +243,13 @@
         this.p1 = null;
         this.p2 = null;
         this.p3 = null;
-        this.p0_val = null;
-        this.p1_val = null;
-        this.p2_val = null;
-        this.p3_val = null;
+        this.values = {};
+        this.values["p0"] = 0;
+        this.values["p1"] = 0;
+        this.values["p2"] = 0;
+        this.values["p3"] = 0;
+        this.values["acc"] = 0;
+        this.values["dat"] = 0;
         this.p0_x = this.x + 350;
         this.p0_y = this.y + 50;
         this.p1_x = this.x + 350;
@@ -508,42 +510,69 @@
     let test = new Controller(20, 20);
     let led = new LED(370, 250);
     let display = new Display(20, 250);
-    let button = new PushButton(370,500);
+    let button = new PushButton(370,500, "but1");
+    let button2 = new PushButton(350, 400, "but2");
     let components = [];
     components.push(test);
     components.push(led);
     components.push(display);
     components.push(button);
+    components.push(button2);
     components.forEach(comp => comp.draw());
 
+    function updateText()
+    {
+       let prefix = "";
+       if(test.values['acc'] < 0) prefix += "-"
+       if(test.values['acc'] < 100) prefix += "0";
+       if(test.values['acc'] < 10) prefix += "0";
+       test.acc_text.text(prefix + Math.abs(test.values["acc"]));
+       prefix = "";
+       if(test.values['dat'] < 0) prefix += "-"
+       if(test.values['dat'] < 100) prefix += "0";
+       if(test.values['dat'] < 10) prefix += "0";
+       test.dat_text.text(prefix + Math.abs(test.values["dat"]));
+    }
+    function find_component(id)
+    {
+      for(component of components)
+      {
+        console.log(component.id);
+        if(component.id == id) return component;
+      }
+      return null;
+    }
     function handleClick()
     {
       let connected = null;
-      if(this.id == "button")
+      //if(this.id == "button")
+      let found = find_component(this.id);
+      console.log(found);
+      if(found)
       {
-        button.button.attr("stroke-width", 3);
-        button.button.attr("stroke", "gold");
+        found.button.attr("stroke-width", 3);
+        found.button.attr("stroke", "gold");
         setTimeout(() => {
-                      button.button.attr("stroke-width", 0);
+                      found.button.attr("stroke-width", 0);
                     }, "200");
       }
-      connected = connections["pushbutton"];
+      connected = connections[this.id + "_conn"];
       let pushed = false;
-      if(connected == "p0"){ test.p0_val = 100;
+      if(connected == "p0"){ test.values["p0"] = 100;
                               pushed = true;}
-      else if(connected == "p1") { test.p1_val = 100;
+      else if(connected == "p1") { test.values['p1'] = 100;
                               pushed = true;}
-      else if(connected == "p2") { test.p2_val = 100;
+      else if(connected == "p2") { test.values['p2'] = 100;
                               pushed = true;}
-      else if(connected == "p3") { test.p3_val = 100;
+      else if(connected == "p3") { test.values['p3'] = 100;
                               pushed = true;}
       if(pushed)
       {
         setTimeout(() => {
-                      if(connected == "p0") test.p0_val = 0;
-                      else if(connected == "p1") test.p1_val = 0;
-                      else if(connected == "p2")  test.p2_val = 0;
-                      else if(connected == "p3")  test.p3_val = 0;
+                      if(connected == "p0") test.values["p0"] = 0;
+                      else if(connected == "p1") test.values["p1"] = 0;
+                      else if(connected == "p2")  test.values["p2"] = 0;
+                      else if(connected == "p3")  test.values["p3"] = 0;
                     }, "200");
       }
       pushed = false;
@@ -555,34 +584,31 @@
       {
         if(connections[tokens[2]] == 'pin1' || connections[tokens[2]] == 'pin2'){
           let power = 0;
-          if(tokens[1] == "acc") power = test.acc;
-          else if(tokens[1] == "dat") power = test.dat;
+          if(tokens[1] == "acc") power = test.values["acc"];
+          else if(tokens[1] == "dat") power = test.values["dat"];
           else power = parseInt(tokens[1]);
           led.power = power;
         }
+        else if(tokens[2] in test.values && tokens[1] in test.values)
+        {
+          test.values[tokens[2]] = test.values[tokens[1]];
+          updateText();
+        } 
         else if(tokens[2] == 'acc')
         {
-          if(tokens[1] == "dat") test.acc = test.dat;
-          else test.acc = parseInt(tokens[1]);
-          let prefix = "";
-          if(test.acc < 100) prefix += "0";
-          if(test.acc < 10) prefix += "0";
-          test.acc_text.text(prefix + test.acc);
+          test.values['acc'] = parseInt(tokens[1]);
+          updateText();
         }
         else if(tokens[2] == 'dat')
         {
-          if(tokens[1] == "acc") test.dat = test.acc;
-          else test.dat = parseInt(tokens[1]);
-          let prefix = "";
-          if(test.dat < 100) prefix += "0";
-          if(test.dat < 10) prefix += "0";
-          test.dat_text.text(prefix + test.dat);
+          test.values['dat'] = parseInt(tokens[1]);
+          updateText();
         }
-        else if(connections[tokens[2]] == 'display')
+        if(connections[tokens[2]] == 'display')
         {
           let seg = null;
-          if(tokens[1] == 'acc') seg = test.acc;
-          else if(tokens[1] == 'dat') seg = test.dat;
+          if(tokens[1] == 'acc') seg = test.values["acc"];
+          else if(tokens[1] == 'dat') seg = test.values["dat"];
           else seg = parseInt(tokens[1]);
           if(seg != null && seg > -1)
           {
@@ -607,69 +633,34 @@
       }
       else if(tokens[0] == "add")
       {
-        let add_to = null;
-        if(tokens[1] == "acc") add_to = "acc";
-        else if(tokens[1] == 'dat') add_to = "dat";
-
-        console.log(add_to);
-        if(tokens[2] == "acc") 
-        {
-          if(add_to == "acc") test.acc += test.acc;
-          else if(add_to == "dat") test.dat += test.acc;
-        }
-        else if(tokens[2] == "dat") 
-        {
-          if(add_to == "acc") test.acc += test.dat;
-          else if(add_to == "dat") test.dat += test.dat;
-        }
-        else
-        {
-          if(add_to == "acc") test.acc += parseInt(tokens[2]);
-          else if(add_to == "dat") test.dat += parseInt(tokens[2]);
-        } 
-        //if(tokens[1] == 'dat') test.acc += test.dat;
-        //else test.acc += parseInt(tokens[1]);
-        let prefix = "";
-        if(test.acc < 100) prefix += "0";
-        if(test.acc < 10) prefix += "0";
-        test.acc_text.text(prefix + test.acc);
-        prefix = "";
-        if(test.dat < 100) prefix += "0";
-        if(test.dat < 10) prefix += "0";
-        test.dat_text.text(prefix + test.dat);
+        if(tokens[1] in test.values && tokens[2] in test.values) test.values[tokens[1]] += test.values[tokens[2]];
+        else if(tokens[1] in test.values && !Number.isNaN(parseInt(tokens[2]))) test.values[tokens[1]] += parseInt(tokens[2]);
+        updateText();
       }
       else if(tokens[0] == "mul")
       {
-        if(tokens[1] == 'dat') test.acc *= test.dat;
-        else test.acc *= parseInt(tokens[1]);
-        let prefix = "";
-        if(test.acc < 100) prefix += "0";
-        if(test.acc < 10) prefix += "0";
-        test.acc_text.text(prefix + test.acc);
+        if(tokens[1] in test.values) test.values["acc"] *= test.values[tokens[1]];
+        else if(!Number.isNaN(parseInt(tokens[1]))) test.values["acc"] *= parseInt(tokens[1]);
+        updateText();
       }
       else if(tokens[0] == "div")
       {
-        if(tokens[1] == 'dat') test.acc =  Math.floor(test.acc/test.dat);
-        else test.acc = Math.floor(test.acc/parseInt(tokens[1]));
-        let prefix = "";
-        if(test.acc < 100) prefix += "0";
-        if(test.acc < 10) prefix += "0";
-        test.acc_text.text(prefix + test.acc);
+        if(tokens[1] in test.values) test.values["acc"] = Math.floor(test.values["acc"]/test.values[tokens[1]]);
+        else if(tokens[1] in test.values && !Number.isNaN(parseInt(tokens[2]))) Math.floor(test.values["acc"]/parseInt(tokens[2]));
+        updateText();
       }
       else if(tokens[0] == "mod")
       {
-        if(tokens[1] == 'dat') test.acc %= test.dat;
-        else test.acc %= parseInt(tokens[1]);
-        let prefix = "";
-        if(test.acc < 100) prefix += "0";
-        if(test.acc < 10) prefix += "0";
-        test.acc_text.text(prefix + test.acc);
+        if(tokens[1] in test.values) test.values["acc"] %= test.values[tokens[1]];
+        else if(tokens[1] in test.values && !Number.isNaN(parseInt(tokens[2]))) test.values["acc"] %= parseInt(tokens[2]);
+        updateText();
       }
       else if(tokens[0] == "jmp")
       {
           i = labels[tokens[1]];
           return -1;
       }
+      //FIX
       else if(tokens[0] == "teq")
         {
           let equal = false;
@@ -779,6 +770,7 @@
               }
            }
           let tokens = lines[i].split(" ");
+          console.log(tokens);
           inc = true;
           if(!cond && tokens[0] == "mov") processMove(tokens);
           else if(!cond && tokens[0] == "slp")
@@ -790,135 +782,84 @@
           }
           else if(!cond && tokens[0] == "add")
           {
-            let add_to = null;
-            if(tokens[1] == "acc") add_to = "acc";
-            else if(tokens[1] == 'dat') add_to = "dat";
-
-            console.log(add_to);
-            if(tokens[2] == "acc") 
-            {
-              if(add_to == "acc") test.acc += test.acc;
-              else if(add_to == "dat") test.dat += test.acc;
-            }
-            else if(tokens[2] == "dat") 
-            {
-              if(add_to == "acc") test.acc += test.dat;
-              else if(add_to == "dat") test.dat += test.dat;
-            }
-            else
-            {
-              if(add_to == "acc") test.acc += parseInt(tokens[2]);
-              else if(add_to == "dat") test.dat += parseInt(tokens[2]);
-            } 
-            //if(tokens[1] == 'dat') test.acc += test.dat;
-            //else test.acc += parseInt(tokens[1]);
-            let prefix = "";
-            if(test.acc < 100) prefix += "0";
-            if(test.acc < 10) prefix += "0";
-            test.acc_text.text(prefix + test.acc);
-            prefix = "";
-            if(test.dat < 100) prefix += "0";
-            if(test.dat < 10) prefix += "0";
-            test.dat_text.text(prefix + test.dat);
+            if(tokens[1] in test.values && tokens[2] in test.values) test.values[tokens[1]] += test.values[tokens[2]];
+            else if(tokens[1] in test.values && !Number.isNaN(parseInt(tokens[2]))) test.values[tokens[1]] += parseInt(tokens[2]);
+            updateText();
           }
           else if(!cond && tokens[0] == "mul")
           {
-            if(tokens[1] == 'dat') test.acc *= test.dat;
-            else test.acc *= parseInt(tokens[1]);
-            let prefix = "";
-            if(test.acc < 100) prefix += "0";
-            if(test.acc < 10) prefix += "0";
-            test.acc_text.text(prefix + test.acc);
+            if(tokens[1] in test.values) test.values["acc"] *= test.values[tokens[1]];
+            else if(tokens[1] in test.values && !Number.isNaN(parseInt(tokens[2]))) test.values["acc"] *= parseInt(tokens[2]);
+            updateText();
           }
           else if(!cond && tokens[0] == "div")
           {
-            if(tokens[1] == 'dat') test.acc =  Math.floor(test.acc/test.dat);
-            else test.acc = Math.floor(test.acc/parseInt(tokens[1]));
-            let prefix = "";
-            if(test.acc < 100) prefix += "0";
-            if(test.acc < 10) prefix += "0";
-            test.acc_text.text(prefix + test.acc);
+            if(tokens[1] in test.values) test.values["acc"] = Math.floor(test.values["acc"]/test.values[tokens[1]]);
+            else if(tokens[1] in test.values && !Number.isNaN(parseInt(tokens[2]))) Math.floor(test.values["acc"]/parseInt(tokens[2]));
+            updateText();
           }
           else if(!cond && tokens[0] == "mod")
           {
-            if(tokens[1] == 'dat') test.acc %= test.dat;
-            else test.acc %= parseInt(tokens[1]);
-            let prefix = "";
-            if(test.acc < 100) prefix += "0";
-            if(test.acc < 10) prefix += "0";
-            test.acc_text.text(prefix + test.acc);
+            if(tokens[1] in test.values) test.values["acc"] %= test.values[tokens[1]];
+            else if(tokens[1] in test.values && !Number.isNaN(parseInt(tokens[2]))) test.values["acc"] %= parseInt(tokens[2]);
+            updateText();
           }
           else if(!cond && tokens[0] == "jmp")
           {
             i = labels[tokens[1]];
           }
-          else if(tokens[0] == "teq")
+          else if(!cond && tokens[0] == "teq")
           {
             let equal = false;
-            if((tokens[1] == "acc" && tokens[2] == "dat") || (tokens[1] == "dat" && tokens[2] == "acc"))
+            if(tokens[1] in test.values && tokens[2] in test.values)
             {
-              if(test.acc == test.dat) equal = true;
+              if(test.values[tokens[1]] == test.values[tokens[2]]) less = true;
             }
-            else if(tokens[1] == "acc" && test.acc == parseInt(tokens[2])) equal = true;
-            else if(tokens[2] == "acc" && test.acc == parseInt(tokens[1])) equal = true;
-            else if(tokens[2] == "dat" && test.dat == parseInt(tokens[1])) equal = true;
-            else if(tokens[1] == "dat" && test.dat == parseInt(tokens[2])) equal = true;
+            else if(tokens[1] in test.values && Number.isNaN(parseInt(tokens[2]))) less = false;
+            else if(tokens[2] in test.values && Number.isNaN(parseInt(tokens[1]))) less = false;
+            else if(test.values[tokens[1]] == parseInt(tokens[2])) equal = true;
+            else if(parseInt(tokens[1]) == test.values[tokens[2]]) equal = true;
             else if(parseInt(tokens[1]) == parseInt(tokens[2])) equal = true;
+
             if(equal)
             {
               if(condExecution(lines)) return;
             }
           }
-          else if(tokens[0] == "tlt")
+          else if(!cond && tokens[0] == "tlt")
           {
             let less = false;
-            if((tokens[1] == "acc" && tokens[2] == "dat") || (tokens[1] == "dat" && tokens[2] == "acc"))
+            if(tokens[1] in test.values && tokens[2] in test.values)
             {
-              if(tokens[1] == "acc")
-              {
-                if(test.acc < test.dat) less = true;
-              }
-              else if(tokens[1] == "dat")
-              {
-                if(test.dat < test.acc) less = true;
-              }
+              if(test.values[tokens[1]] < test.values[tokens[2]]) less = true;
             }
-            else if(tokens[1] == "acc" && test.acc < parseInt(tokens[2])) less = true;
-            else if(tokens[2] == "acc" && test.acc >= parseInt(tokens[1])) less = true;
-            else if(tokens[2] == "dat" && test.dat >= parseInt(tokens[1])) less = true;
-            else if(tokens[1] == "dat" && test.dat < parseInt(tokens[2])) less = true;
+            else if(tokens[1] in test.values && Number.isNaN(parseInt(tokens[2]))) less = false;
+            else if(tokens[2] in test.values && Number.isNaN(parseInt(tokens[1]))) less = false;
+            else if(test.values[tokens[1]] < parseInt(tokens[2])) less = true;
+            else if(parseInt(tokens[1]) < test.values[tokens[2]]) less = true;
             else if(parseInt(tokens[1]) < parseInt(tokens[2])) less = true;
+
             if(less)
             {
               if(condExecution(lines)) return;
             }
           }
-          else if(tokens[0] == "tgt")
+          else if(!cond && tokens[0] == "tgt")
           {
             let gtr = false;
-            if((tokens[1] == "acc" && tokens[2] == "dat") || (tokens[1] == "dat" && tokens[2] == "acc"))
+            if(tokens[1] in test.values && tokens[2] in test.values)
             {
-              if(tokens[1] == "acc")
-              {
-                if(test.acc > test.dat) gtr = true;
-              }
-              else if(tokens[1] == "dat")
-              {
-                if(test.dat > test.acc) gtr = true;
-              }
+              if(test.values[tokens[1]] > test.values[tokens[2]]) gtr = true;
             }
-            else if(tokens[1] == "acc" && test.acc > parseInt(tokens[2])) gtr = true;
-            else if(tokens[2] == "acc" && test.acc <= parseInt(tokens[1])) gtr = true;
-            else if(tokens[2] == "dat" && test.dat <= parseInt(tokens[1])) gtr = true;
-            else if(tokens[1] == "dat" && test.dat > parseInt(tokens[2])) gtr = true;
-            else if(tokens[1] == "p0" && test.p0_val > parseInt(tokens[2])){ gtr = true;
-                    console.log("BUTTON PRESSED");}
-            else if(parseInt(tokens[1]) > parseInt(tokens[2])) gtr = true;
+            else if(tokens[1] in test.values && Number.isNaN(parseInt(tokens[2]))) gtr = false;
+            else if(tokens[2] in test.values && Number.isNaN(parseInt(tokens[1]))) gtr = false;
+            else if(test.values[tokens[1]] > parseInt(tokens[2])) gtr = true;
+            else if(parseInt(tokens[1]) > test.values[tokens[2]]) gtr = true;
+            else if(parseInt(tokens[1]) < parseInt(tokens[2])) gtr = true;
+
             if(gtr)
             {
-              //if(condExecution(lines)) return;
-              let ex = condExecution(lines);
-              if(ex) return;
+              if(condExecution(lines)) return;
             }
           }
           else if(cond)
@@ -926,9 +867,8 @@
             if(condExecution(lines)) return;
           }
 
-          //if(inc) i++;
-          if(i >= lines.length) i = 0;
           if(inc) i++;
+          if(i >= lines.length) i = 0;
         }
         
       }
