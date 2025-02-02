@@ -243,21 +243,25 @@
         this.p1 = null;
         this.p2 = null;
         this.p3 = null;
+        this.p4 = null;
         this.values = {};
         this.values["p0"] = 0;
         this.values["p1"] = 0;
         this.values["p2"] = 0;
         this.values["p3"] = 0;
+        this.values['p4'] = 0;
         this.values["acc"] = 0;
         this.values["dat"] = 0;
         this.p0_x = this.x + 350;
-        this.p0_y = this.y + 50;
+        this.p0_y = this.y + 25;
         this.p1_x = this.x + 350;
-        this.p1_y = this.y + 75;
+        this.p1_y = this.y + 50;
         this.p2_x = this.x + 350;
-        this.p2_y = this.y + 100;
+        this.p2_y = this.y + 75;
         this.p3_x = this.x + 350;
-        this.p3_y = this.y + 125;
+        this.p3_y = this.y + 100;
+        this.p4_x = this.x + 350;
+        this.p4_y = this.y + 125;
         this.ground = null;
         this.ground_x = this.x + 350;
         this.ground_y = this.y + 150;
@@ -318,6 +322,10 @@
           .attr("y", this.p3_y)
           .text("p3"));
         this.contains.push(this.container.append("text")
+          .attr("x", this.p4_x + 10)
+          .attr("y", this.p4_y)
+          .text("p4"));
+        this.contains.push(this.container.append("text")
           .attr("x", this.ground_x + 10)
           .attr("y", this.ground_y)
           .text("GND"));
@@ -369,10 +377,22 @@
           .attr("data-px", this.p3_x)
           .attr('data-py', this.p3_y)
           .on("contextmenu", contextMenuCalled);
+        this.p4 = this.container.append("circle")
+          .attr("cx", this.p4_x)
+          .attr("cy", this.p4_y)
+          .attr("r", 5)
+          .attr('width', 20)
+          .attr('height', 20)
+          .attr("fill", "yellow")
+          .attr('id', "p4")
+          .attr("data-px", this.p4_x)
+          .attr('data-py', this.p4_y)
+          .on("contextmenu", contextMenuCalled);
         this.contains.push(this.p0);
         this.contains.push(this.p1);
         this.contains.push(this.p2);
         this.contains.push(this.p3);
+        this.contains.push(this.p4);
         this.ground = this.container.append("circle")
           .attr("cx", this.ground_x)
           .attr("cy", this.ground_y)
@@ -511,13 +531,17 @@
     let led = new LED(370, 250);
     let display = new Display(20, 250);
     let button = new PushButton(370,500, "but1");
-    let button2 = new PushButton(350, 400, "but2");
+    let button2 = new PushButton(470, 500, "but2");
+    let button3 = new PushButton(570, 500, "but3");
+    let button4 = new PushButton(470, 400, "but4");
     let components = [];
     components.push(test);
     components.push(led);
     components.push(display);
     components.push(button);
     components.push(button2);
+    components.push(button3);
+    components.push(button4);
     components.forEach(comp => comp.draw());
 
     function updateText()
@@ -616,6 +640,7 @@
           }
           else if(seg != null)
           {
+            if(seg == -999) for(seg of display.segs) seg.attr("fill", "whitesmoke");
             if(-seg < display.segs.length) display.segs[-seg].attr("fill", "whitesmoke");
           }
         }
