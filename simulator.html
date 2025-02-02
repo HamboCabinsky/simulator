@@ -41,6 +41,7 @@
     let connections = {};
     let labels = {};
     let edit_mode = false;
+    let build_mode = false;
     let curr_inst = "";
     let i = 0;
     let sleep_timer = 0;
@@ -62,6 +63,60 @@
                       .attr("height", c_height)
                       .attr("fill", "whitesmoke");
 
+
+    class BuildMenu
+    {
+      constructor(x, y){
+        this.x = x;
+        this.y = y;
+        this.contains = []
+        this.frame = canvas.append('rect')
+          .attr("x", this.x)
+          .attr("y", this.y)
+          .attr("width", 150)
+          .attr("height", 300)
+          .attr("fill", "darkgray");
+        this.contains.push(this.frame);
+        this.label1 = canvas.append('rect')
+          .attr("x", this.x + 10)
+          .attr("y", this.y + 10)
+          .attr("width", 125)
+          .attr("height", 40)
+          .attr("fill", "lightgray");
+        this.contains.push(this.label1);
+        this.text1 = canvas.append("text")
+          .attr("x", this.x + 30)
+          .attr("y", this.y + 30)
+          .attr("fill", "black")
+          .attr("font-weight", "bold")
+          .attr("style", "user-select: none;")
+          .text("PushButton");
+        this.contains.push(this.text1);
+      }
+
+      toggleVisibility(components){
+          console.log(components);
+          if(!build_mode)
+          {
+            build_mode = true;
+            for(let comp of this.contains) comp.attr("style", "visibility: visible;");
+            for(let comp of components)
+            { comp.delete_box.attr("style", "visibility: visible;");
+              comp.delete_x.attr("style", "visibility: visible;")
+            }
+          }
+          else
+          {
+            build_mode = false;
+            for(let comp of this.contains) comp.attr("style", "visibility: hidden;");
+            for(let comp of components)
+            { comp.delete_box.attr("style", "visibility: hidden;");
+              comp.delete_x.attr("style", "visibility: hidden;")
+            }
+          }
+        }
+    }
+
     class Component {
       constructor(x, y){
         this.x = x;
@@ -70,6 +125,21 @@
         this.container = canvas.append("g")
                               .attr("x", x)
                               .attr("y", y);
+        this.delete_box = canvas.append("rect")
+          .attr("x", this.x)
+          .attr("y", this.y)
+          .attr("width", 20)
+          .attr("height", 20)
+          .attr("fill", "red");
+        this.contains.push(this.delete_box);
+        this.delete_x = canvas.append("text")
+          .attr("x", this.x + 5)
+          .attr("y", this.y + 15)
+          .attr("fill", "whitesmoke")
+          .attr("font-weight", "bold")
+          .attr("style", "user-select: none;")
+          .text("X");
+        this.contains.push(this.delete_x);
       }
 
       draw(){
@@ -309,30 +379,37 @@
         this.contains.push(this.container.append("text")
           .attr("x", this.p0_x + 10)
           .attr("y", this.p0_y)
+          .attr("style", "user-select: none;")
           .text("p0"));
         this.contains.push(this.container.append("text")
           .attr("x", this.p1_x + 10)
           .attr("y", this.p1_y)
+          .attr("style", "user-select: none;")
           .text("p1"));
         this.contains.push(this.container.append("text")
           .attr("x", this.p2_x + 10)
           .attr("y", this.p2_y)
+          .attr("style", "user-select: none;")
           .text("p2"));
         this.contains.push(this.container.append("text")
           .attr("x", this.p3_x + 10)
           .attr("y", this.p3_y)
+          .attr("style", "user-select: none;")
           .text("p3"));
         this.contains.push(this.container.append("text")
           .attr("x", this.p4_x + 10)
           .attr("y", this.p4_y)
+          .attr("style", "user-select: none;")
           .text("p4"));
         this.contains.push(this.container.append("text")
           .attr("x", this.ground_x + 10)
           .attr("y", this.ground_y)
+          .attr("style", "user-select: none;")
           .text("GND"));
         this.contains.push(this.container.append("text")
           .attr("x", this.ground2_x + 10)
           .attr("y", this.ground2_y)
+          .attr("style", "user-select: none;")
           .text("GND"));
         this.p0 = this.container.append("circle")
           .attr("cx", this.p0_x)
@@ -444,10 +521,12 @@
         this.acc_text = this.container.append("text")
                           .attr("x", this.acc_text_x)
                           .attr("y", this.acc_text_y)
+                          .attr("style", "user-select: none;")
                           .text("000");
         this.acc_label = this.container.append("text")
                           .attr("x", this.acc_label_x)
                           .attr("y", this.acc_label_y)
+                          .attr("style", "user-select: none;")
                           .text("ACC");
         this.contains.push(this.acc_box);
         this.contains.push(this.acc_text);
@@ -461,10 +540,12 @@
         this.dat_text = this.container.append("text")
                           .attr("x", this.dat_text_x)
                           .attr("y", this.dat_text_y)
+                          .attr("style", "user-select: none;")
                           .text("000");
         this.dat_label = this.container.append("text")
                           .attr("x", this.dat_label_x)
                           .attr("y", this.dat_label_y)
+                          .attr("style", "user-select: none;")
                           .text("DAT");
         this.contains.push(this.dat_box);
         this.contains.push(this.dat_text);
@@ -527,7 +608,6 @@
       }
 
     };
-
     let test = new Controller(20, 20);
     let led = new LED(370, 250);
     let display = new Display(20, 250);
@@ -545,6 +625,32 @@
     components.push(button4);
     components.forEach(comp => comp.draw());
 
+    class BuildButton{
+      constructor(x, y){
+        this.x = x;
+        this.y = y;
+        this.components = components;
+        this.frame = canvas.append('rect')
+          .attr("x", this.x)
+          .attr("y", this.y)
+          .attr("width", 100)
+          .attr("height", 100)
+          .attr("fill", "limegreen")
+          .on("click", () => handleBuild(this.components));
+        this.text = canvas.append("text")
+          .attr("x", this.x + 25)
+          .attr("y", this.y + 50)
+          .attr("fill", "whitesmoke")
+          .attr("font-weight", "bold")
+          .attr("style", "user-select: none;")
+          .text("BUILD");
+
+      }
+    }
+    let build_button = new BuildButton(500,20);
+    let menu = new BuildMenu(600, 20);
+    menu.toggleVisibility(components);
+    menu.toggleVisibility(components);
     function updateText()
     {
        let prefix = "";
@@ -566,6 +672,11 @@
         if(component.id == id) return component;
       }
       return null;
+    }
+
+    function handleBuild(components)
+    {
+      menu.toggleVisibility(components);
     }
     function handleClick()
     {
