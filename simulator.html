@@ -48,6 +48,7 @@
     let sleep = false;
     let cond = false;
     let inc = false;
+    let data_id = 0;
     width = Math.floor(screen_width);
     height = Math.floor(screen_width);
     c_width = .75*width;
@@ -121,6 +122,8 @@
       constructor(x, y){
         this.x = x;
         this.y = y;
+        this.data_id = data_id;
+        data_id++;
         this.contains = [];
         this.container = canvas.append("g")
                               .attr("x", x)
@@ -130,7 +133,9 @@
           .attr("y", this.y)
           .attr("width", 20)
           .attr("height", 20)
-          .attr("fill", "red");
+          .attr("data-id", this.data_id)
+          .attr("fill", "red")
+          .on("click", handleDelete);
         this.contains.push(this.delete_box);
         this.delete_x = canvas.append("text")
           .attr("x", this.x + 5)
@@ -138,7 +143,9 @@
           .attr("fill", "whitesmoke")
           .attr("font-weight", "bold")
           .attr("style", "user-select: none;")
-          .text("X");
+          .attr("data-id", this.data_id)
+          .text("X")
+          .on("click", handleDelete);
         this.contains.push(this.delete_x);
       }
 
@@ -304,6 +311,7 @@
           .attr("data-px", this.p_x)
           .attr('data-py', this.p_y)
           .on("contextmenu", contextMenuCalled);
+        this.contains.push(this.p0);
       }
     }
 
@@ -673,6 +681,30 @@
       }
       return null;
     }
+    function find_by_data_id(id)
+    {
+      for(component of components)
+      {
+        console.log(component.data_id);
+        if(component.data_id == id) return component;
+      }
+      return null;
+    }
+    function handleDelete()
+    {
+      let to_delete = d3.select(this).attr("data-id");
+      for(let i = 0; i < components.length; i++)
+      {
+        
+        if(components[i].data_id == to_delete) 
+          {console.log(i);
+           console.log(components[i]);
+          components[i].delete();
+          components.splice(i, 1);
+          i--;
+          }
+      }
+    }
 
     function handleBuild(components)
     {
@@ -681,9 +713,9 @@
     function handleClick()
     {
       let connected = null;
-      //if(this.id == "button")
+      //if(this.id == "button") 
       let found = find_component(this.id);
-      console.log(found);
+      //console.log(found);
       if(found)
       {
         found.button.attr("stroke-width", 3);
