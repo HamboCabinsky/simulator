@@ -167,6 +167,21 @@
       delete(){
         for(let i = 0; i < this.contains.length; i++)
         {
+          if(this.contains[i].node().id in connections)
+          {
+            for(let wire of wires)
+            {
+              console.log(wire);
+              if(wire.attr("data-origin") == this.contains[i].node().id || wire.attr("data-end") == this.contains[i].node().id)
+              {
+                let wire_index = wires.indexOf(wire);
+                delete connections[wire.attr("data-origin")];
+                delete connections[wire.attr("data-end")];
+                wire.remove();
+                wires.splice(wire_index,1);
+              }
+            }
+          }
           d3.select(this.contains[i]).node().remove();
         }
         this.contains = [];
