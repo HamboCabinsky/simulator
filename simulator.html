@@ -42,6 +42,9 @@
     let labels = {};
     let edit_mode = false;
     let build_mode = false;
+    let place_mode = false;
+    let placing = false;
+    let build_piece = null;
     let curr_inst = "";
     let i = 0;
     let sleep_timer = 0;
@@ -56,7 +59,8 @@
 
     let canvas = d3.select("#canvas").append("svg")
                   .attr("width", c_width)
-                  .attr("height", c_height);
+                  .attr("height", c_height)
+                  .on("click", place);
 
     d3.select("#canvas").attr("style", "text-align:center;");
     let background = canvas.append("rect")
@@ -83,7 +87,9 @@
           .attr("y", this.y + 10)
           .attr("width", 125)
           .attr("height", 40)
-          .attr("fill", "lightgray");
+          .attr("fill", "lightgray")
+          .attr("id", "PushButton")
+          .on("click", handlePushButton);
         this.contains.push(this.label1);
         this.text1 = canvas.append("text")
           .attr("x", this.x + 30)
@@ -744,6 +750,37 @@
                     }, "200");
       }
       pushed = false;
+    }
+
+    function handlePushButton()
+    {
+      place_mode = true;
+      build_piece = "PushButton"
+      d3.select(this).attr("fill", "yellow");
+    }
+
+    function place()
+    {
+      if(place_mode)
+      {
+        let placed = false;
+        if(placing)
+        {
+          let click = d3.mouse(this);
+
+          if(build_piece == "PushButton"){
+            let newButton = new PushButton(click[0], click[1], "but" + data_id);
+            newButton.draw();
+            components.push(newButton);
+            }
+          place_mode = false;
+          placing = false;
+          placed = true;
+          d3.select("#PushButton").attr('fill', 'lightgray');
+        }
+        
+        if(!placed) placing = true;
+      }
     }
 
     function processMove(tokens)
