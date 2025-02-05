@@ -99,6 +99,40 @@
           .attr("style", "user-select: none;")
           .text("PushButton");
         this.contains.push(this.text1);
+        this.label2 = canvas.append('rect')
+          .attr("x", this.x + 10)
+          .attr("y", this.y + 60)
+          .attr("width", 125)
+          .attr("height", 40)
+          .attr("fill", "lightgray")
+          .attr("id", "LED")
+          .on("click", handleLED);
+        this.contains.push(this.label2);
+        this.text2 = canvas.append("text")
+          .attr("x", this.x + 30)
+          .attr("y", this.y + 90)
+          .attr("fill", "black")
+          .attr("font-weight", "bold")
+          .attr("style", "user-select: none;")
+          .text("LED");
+        this.contains.push(this.text2);
+        this.label3 = canvas.append('rect')
+          .attr("x", this.x + 10)
+          .attr("y", this.y + 110)
+          .attr("width", 125)
+          .attr("height", 40)
+          .attr("fill", "lightgray")
+          .attr("id", "screen")
+          .on("click", handleDisplay);
+        this.contains.push(this.label3);
+        this.text3 = canvas.append("text")
+          .attr("x", this.x + 30)
+          .attr("y", this.y + 140)
+          .attr("fill", "black")
+          .attr("font-weight", "bold")
+          .attr("style", "user-select: none;")
+          .text("Display");
+        this.contains.push(this.text3);
       }
 
       toggleVisibility(components){
@@ -773,7 +807,21 @@
     function handlePushButton()
     {
       place_mode = true;
-      build_piece = "PushButton"
+      build_piece = "PushButton";
+      d3.select(this).attr("fill", "yellow");
+    }
+
+    function handleLED()
+    {
+      place_mode = true;
+      build_piece = "LED";
+      d3.select(this).attr("fill", "yellow");
+    }
+
+    function handleDisplay()
+    {
+      place_mode = true;
+      build_piece = "Display";
       d3.select(this).attr("fill", "yellow");
     }
 
@@ -790,11 +838,33 @@
             let newButton = new PushButton(click[0], click[1], "but" + data_id);
             newButton.draw();
             components.push(newButton);
+            place_mode = false;
+            placing = false;
+            placed = true;
+            d3.select("#PushButton").attr('fill', 'lightgray');
             }
-          place_mode = false;
-          placing = false;
-          placed = true;
-          d3.select("#PushButton").attr('fill', 'lightgray');
+          else if(build_piece == "LED")
+          {
+            let newLED = new LED(click[0], click[1]);
+            led = newLED;
+            newLED.draw();
+            components.push(newLED);
+            place_mode = false;
+            placing = false;
+            placed = true;
+            d3.select("#LED").attr('fill', 'lightgray');
+          }
+          else if(build_piece == "Display")
+          {
+            let newDisplay = new Display(click[0], click[1]);
+            display = newDisplay;
+            newDisplay.draw();
+            components.push(newDisplay);
+            place_mode = false;
+            placing = false;
+            placed = true;
+            d3.select("#screen").attr('fill', 'lightgray');
+          }
         }
         
         if(!placed) placing = true;
