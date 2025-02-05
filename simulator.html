@@ -755,6 +755,8 @@
                               pushed = true;}
       else if(connected == "p3") { test.values['p3'] = 100;
                               pushed = true;}
+      else if(connected == "p4") { test.values['p4'] = 100;
+                              pushed = true;}
       if(pushed)
       {
         setTimeout(() => {
@@ -762,6 +764,7 @@
                       else if(connected == "p1") test.values["p1"] = 0;
                       else if(connected == "p2")  test.values["p2"] = 0;
                       else if(connected == "p3")  test.values["p3"] = 0;
+                      else if(connected == "p4")  test.values["p4"] = 0;
                     }, "200");
       }
       pushed = false;
