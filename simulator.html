@@ -276,6 +276,7 @@
         this.screen_size = 250;
         this.in_x = this.x + 275;
         this.in_y = this.y + 12;
+        this.id = "display"+this.data_id;
       }
       draw()
       {
@@ -300,7 +301,7 @@
           .attr('width', 20)
           .attr('height', 20)
           .attr("fill", "yellow")
-          .attr('id', "display")
+          .attr('id', this.id)
           .attr("data-px", this.in_x)
           .attr('data-py', this.in_y)
           .on("contextmenu", contextMenuCalled);
@@ -873,6 +874,9 @@
 
     function processMove(tokens)
     {
+      let rd = tokens[1];
+      let op2 = tokens[2];
+      /*
       if(tokens[1])
       {
         if(connections[tokens[2]] == 'pin1' || connections[tokens[2]] == 'pin2'){
@@ -913,6 +917,52 @@
             if(-seg < display.segs.length) display.segs[-seg].attr("fill", "whitesmoke");
           }
         }
+      }
+      */
+      if(rd)
+      {
+        if(connections[rd] == 'pin1' || connections[rd] == 'pin2'){
+          let power = 0;
+          if(op2 == "acc") power = test.values["acc"];
+          else if(op2 == "dat") power = test.values["dat"];
+          else power = parseInt(op2);
+          led.power = power;
+        }
+        else if(rd in test.values && op2 in test.values)
+        {
+          test.values[rd] = test.values[op2];
+          updateText();
+        } 
+        else if(rd == 'acc')
+        {
+          test.values['acc'] = parseInt(op2);
+          updateText();
+        }
+        else if(rd == 'dat')
+        {
+          test.values['dat'] = parseInt(op2);
+          updateText();
+        }
+        if(connections[rd]){
+          if(connections[rd].includes('display'))
+          {
+            let newDisplay = null;
+            for(comp of components) if(comp.id == connections[rd]) newDisplay = comp;
+            
+            let seg = null;
+            if(op2 == 'acc') seg = test.values["acc"];
+            else if(op2 == 'dat') seg = test.values["dat"];
+            else seg = parseInt(op2);
+            if(seg != null && seg > -1)
+            {
+              if(seg < newDisplay.segs.length) newDisplay.segs[seg].attr("fill", "black");
+            }
+            else if(seg != null)
+            {
+              if(seg == -999) for(seg of newDisplay.segs) seg.attr("fill", "whitesmoke");
+              if(-seg < newDisplay.segs.length) newDisplay.segs[-seg].attr("fill", "whitesmoke");
+            }
+          }}
       }
     }
 
