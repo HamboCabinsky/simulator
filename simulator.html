@@ -164,6 +164,7 @@
         this.y = y;
         this.data_id = data_id;
         data_id++;
+        this.id = data_id;
         this.contains = [];
         this.container = canvas.append("g")
                               .attr("x", x)
@@ -352,10 +353,102 @@
           .attr('height', 20)
           .attr("fill", "red")
           .attr('id', this.id)
-          .attr("data-px", this.p0_x)
-          .attr('data-py', this.p0_y)
+          .attr("data-px", this.x + 37)
+          .attr('data-py', this.y + 37)
           .on("click", handleClick);
+
         this.contains.push(this.button);
+        this.p0 = this.container.append("circle")
+          .attr("cx", this.p_x)
+          .attr("cy", this.p_y)
+          .attr("r", 5)
+          .attr('width', 20)
+          .attr('height', 20)
+          .attr("fill", "yellow")
+          .attr('id', this.id+"_conn")
+          .attr("data-px", this.p_x)
+          .attr('data-py', this.p_y)
+          .on("contextmenu", contextMenuCalled);
+        this.contains.push(this.p0);
+      }
+    }
+
+    class Joystick extends Component{
+      constructor(x,y){
+        super(x,y);
+        this.id = this.data_id;
+        this.stick = null;
+        this.stick_x = this.x + 37;
+        this.stick_y = this.y + 37;
+        this.up_arrow = null;
+        this.up_arrow_x = this.x + 37;
+        this.up_arrow_y = this.y + 15;
+        this.down_arrow = null;
+        this.down_arrow_x = this.x + 37;
+        this.down_arrow_y = this.y + 60;
+        this.left_arrow = null;
+        this.left_arrow_x = this.x + 14;
+        this.left_arrow_y = this.y + 37;
+        this.right_arrow = null;
+        this.right_arrow_x = this.x + 60;
+        this.right_arrow_y = this.y + 37;
+        this.arrow_size = 15;
+        this.p0 = null;
+        this.p_x = this.x + 10;
+        this.p_y = this.y + 10;
+        }
+      draw(){
+        this.contains.push(this.container.append("rect")
+          .attr("x", this.x)
+          .attr("y", this.y)
+          .attr("width", 75)
+          .attr("height", 75)
+          .attr("fill", "slategray"));
+        this.contains.push(this.container.append("circle")
+          .attr("cx", this.stick_x)
+          .attr("cy", this.stick_y)
+          .attr("r", 30)
+          .attr("fill", "darkgray")
+          .attr('id', this.id)
+          .attr("data-px", this.stick_x)
+          .attr('data-py', this.stick_y));
+        this.stick = this.container.append("circle")
+          .attr("cx", this.stick_x)
+          .attr("cy", this.stick_y)
+          .attr("r", 20)
+          .attr("fill", "red")
+          .attr('id', this.id)
+          .attr("data-px", this.stick_x)
+          .attr('data-py', this.stick_y);
+        this.up_arrow = this.container.append('polygon')
+          .attr("points", "" + (this.up_arrow_x - this.arrow_size) + "," + this.up_arrow_y + " " + (this.up_arrow_x + this.arrow_size) + "," + this.up_arrow_y + " " + this.up_arrow_x + "," + (this.up_arrow_y - this.arrow_size))
+          .attr("fill", "black")
+          .attr("opacity", "0.3")
+          .attr("id", "up " + this.id)
+          .on("click", handleJoystick);
+        this.down_arrow = this.container.append('polygon')
+          .attr("points", "" + (this.down_arrow_x - this.arrow_size) + "," + this.down_arrow_y + " " + (this.down_arrow_x + this.arrow_size) + "," + this.down_arrow_y + " " + this.down_arrow_x + "," + (this.down_arrow_y + this.arrow_size))
+          .attr("fill", "black")
+          .attr("opacity", "0.3")
+          .attr("id", "down " + this.id)
+          .on("click", handleJoystick);
+        this.right_arrow = this.container.append('polygon')
+          .attr("points", "" + this.right_arrow_x + "," + (this.right_arrow_y - this.arrow_size) + " " + this.right_arrow_x + "," + (this.right_arrow_y + this.arrow_size) + " " + (this.right_arrow_x + this.arrow_size) + "," + this.right_arrow_y)
+          .attr("fill", "black")
+          .attr("opacity", "0.3")
+          .attr("id", "right " + this.id)
+          .on("click", handleJoystick);
+        this.left_arrow = this.container.append('polygon')
+          .attr("points", "" + this.left_arrow_x + "," + (this.left_arrow_y - this.arrow_size) + " " + this.left_arrow_x + "," + (this.left_arrow_y + this.arrow_size) + " " + (this.left_arrow_x - this.arrow_size) + "," + this.left_arrow_y)
+          .attr("fill", "black")
+          .attr("opacity", "0.3")
+          .attr("id", "left " + this.id)
+          .on("click", handleJoystick);
+        this.contains.push(this.stick);
+        this.contains.push(this.up_arrow);
+        this.contains.push(this.down_arrow);
+        this.contains.push(this.left_arrow);
+        this.contains.push(this.right_arrow);
         this.p0 = this.container.append("circle")
           .attr("cx", this.p_x)
           .attr("cy", this.p_y)
@@ -673,20 +766,12 @@
 
     };
     let test = new Controller(20, 20);
-    let led = new LED(370, 250);
     let display = new Display(20, 250);
-    let button = new PushButton(370,500, "but1");
-    let button2 = new PushButton(470, 500, "but2");
-    let button3 = new PushButton(570, 500, "but3");
-    let button4 = new PushButton(470, 400, "but4");
+    let joystick = new Joystick(370, 500);
     let components = [];
+    components.push(joystick);
     components.push(test);
-    components.push(led);
     components.push(display);
-    components.push(button);
-    components.push(button2);
-    components.push(button3);
-    components.push(button4);
     components.forEach(comp => comp.draw());
 
     class BuildButton{
@@ -732,7 +817,6 @@
     {
       for(component of components)
       {
-        console.log(component.id);
         if(component.id == id) return component;
       }
       return null;
@@ -766,10 +850,111 @@
     {
       menu.toggleVisibility(components);
     }
+
+    function handleJoystick()
+    {
+      let tokens = this.id.split(" ");
+      console.log(tokens);
+      let direction = tokens[0];
+      let id = tokens[1];
+      let connected = null;
+      let found = find_component(tokens[1]);
+      if(found){
+        connected = connections[id + "_conn"];
+        let pushed = false;
+        if(direction == 'left')
+        {
+          if(connected == "p0"){ test.values["p0"] = 1;
+                                pushed = true;}
+          else if(connected == "p1") { test.values['p1'] = 1;
+                                  pushed = true;}
+          else if(connected == "p2") { test.values['p2'] = 1;
+                                  pushed = true;}
+          else if(connected == "p3") { test.values['p3'] = 1;
+                                  pushed = true;}
+          else if(connected == "p4") { test.values['p4'] = 1;
+                                pushed = true;}
+          found.left_arrow.attr("stroke-width", 3);
+          found.left_arrow.attr("stroke", "gold");
+          setTimeout(() => {
+                      found.left_arrow.attr("stroke-width", 0);
+                    }, "50");
+
+        }
+        else if(direction == "right")
+        {
+          if(connected == "p0"){ test.values["p0"] = 2;
+                                pushed = true;}
+          else if(connected == "p1") { test.values['p1'] = 2;
+                                  pushed = true;}
+          else if(connected == "p2") { test.values['p2'] = 2;
+                                  pushed = true;}
+          else if(connected == "p3") { test.values['p3'] = 2;
+                                  pushed = true;}
+          else if(connected == "p4") { test.values['p4'] = 2;
+                                pushed = true;}
+          found.right_arrow.attr("stroke-width", 3);
+          found.right_arrow.attr("stroke", "gold");
+          setTimeout(() => {
+                      found.right_arrow.attr("stroke-width", 0);
+                    }, "50");
+        }
+        else if(direction == "up")
+        {
+          if(connected == "p0"){ test.values["p0"] = 3;
+                                pushed = true;}
+          else if(connected == "p1") { test.values['p1'] = 3;
+                                  pushed = true;}
+          else if(connected == "p2") { test.values['p2'] = 3;
+                                  pushed = true;}
+          else if(connected == "p3") { test.values['p3'] = 3;
+                                  pushed = true;}
+          else if(connected == "p4") { test.values['p4'] = 3;
+                                pushed = true;}
+          found.up_arrow.attr("stroke-width", 3);
+          found.up_arrow.attr("stroke", "gold");
+          setTimeout(() => {
+                      found.up_arrow.attr("stroke-width", 0);
+                    }, "50");
+        }
+        else if(direction == "down")
+        {
+          if(connected == "p0"){ test.values["p0"] = 4;
+                                pushed = true;}
+          else if(connected == "p1") { test.values['p1'] = 4;
+                                  pushed = true;}
+          else if(connected == "p2") { test.values['p2'] = 4;
+                                  pushed = true;}
+          else if(connected == "p3") { test.values['p3'] = 4;
+                                  pushed = true;}
+          else if(connected == "p4") { test.values['p4'] = 4;
+                                pushed = true;}
+          found.down_arrow.attr("stroke-width", 3);
+          found.down_arrow.attr("stroke", "gold");
+          setTimeout(() => {
+                      found.down_arrow.attr("stroke-width", 0);
+                    }, "50");
+
+        }
+        if(pushed)
+        {
+          setTimeout(() => {
+                        if(connected == "p0") test.values["p0"] = 0;
+                        else if(connected == "p1") test.values["p1"] = 0;
+                        else if(connected == "p2")  test.values["p2"] = 0;
+                        else if(connected == "p3")  test.values["p3"] = 0;
+                        else if(connected == "p4")  test.values["p4"] = 0;
+                      }, "200");
+        }
+        pushed = false;
+      }
+
+    }
+
     function handleClick()
     {
       let connected = null;
-      //if(this.id == "button") 
+      //if(this.id == "button")
       let found = find_component(this.id);
       //console.log(found);
       if(found)
@@ -876,49 +1061,6 @@
     {
       let rd = tokens[1];
       let op2 = tokens[2];
-      /*
-      if(tokens[1])
-      {
-        if(connections[tokens[2]] == 'pin1' || connections[tokens[2]] == 'pin2'){
-          let power = 0;
-          if(tokens[1] == "acc") power = test.values["acc"];
-          else if(tokens[1] == "dat") power = test.values["dat"];
-          else power = parseInt(tokens[1]);
-          led.power = power;
-        }
-        else if(tokens[2] in test.values && tokens[1] in test.values)
-        {
-          test.values[tokens[2]] = test.values[tokens[1]];
-          updateText();
-        } 
-        else if(tokens[2] == 'acc')
-        {
-          test.values['acc'] = parseInt(tokens[1]);
-          updateText();
-        }
-        else if(tokens[2] == 'dat')
-        {
-          test.values['dat'] = parseInt(tokens[1]);
-          updateText();
-        }
-        if(connections[tokens[2]] == 'display')
-        {
-          let seg = null;
-          if(tokens[1] == 'acc') seg = test.values["acc"];
-          else if(tokens[1] == 'dat') seg = test.values["dat"];
-          else seg = parseInt(tokens[1]);
-          if(seg != null && seg > -1)
-          {
-            if(seg < display.segs.length) display.segs[seg].attr("fill", "black");
-          }
-          else if(seg != null)
-          {
-            if(seg == -999) for(seg of display.segs) seg.attr("fill", "whitesmoke");
-            if(-seg < display.segs.length) display.segs[-seg].attr("fill", "whitesmoke");
-          }
-        }
-      }
-      */
       if(rd)
       {
         if(connections[rd] == 'pin1' || connections[rd] == 'pin2'){
@@ -1058,7 +1200,7 @@
 
     const intervalId = setInterval(() => {
       let lines = [];
-      if(parseInt(led.power) != 0)
+      /*if(parseInt(led.power) != 0)
             {
               let fill_str = "rgb(255," + parseInt(led.power*2) + "," + parseInt(led.power*2) +")"; 
               led.bulb.attr("fill", fill_str);
@@ -1067,6 +1209,7 @@
             {
               led.bulb.attr("fill", "red");
             }
+      */
       if(sleep_timer)
       {
         sleep_timer--;
@@ -1084,7 +1227,7 @@
         lines = inst.split("\n");
         while(true)
         {
-           if(parseInt(led.power) != 0)
+           /*if(parseInt(led.power) != 0)
             {
               let fill_str = "rgb(255," + parseInt(led.power*2) + "," + parseInt(led.power*2) +")";
               led.bulb.attr("fill", fill_str);
@@ -1093,6 +1236,7 @@
             {
               led.bulb.attr("fill", "red");
             }
+            */
            sleep = false;
            for(let j = 0; j < lines.length; j++)
            {
